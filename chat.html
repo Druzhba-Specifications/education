@@ -18,7 +18,7 @@
   <script>
     const user = localStorage.getItem('chatUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!user) location.href = 'Loginscreen.html';
+    if (!user) location.href = 'index.html';
 
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
