@@ -54,6 +54,11 @@
       margin-left: 5px;
       font-size: 10px;
     }
+    .emoji {
+      font-size: 20px;
+      cursor: pointer;
+      margin: 5px;
+    }
   </style>
 </head>
 <body>
@@ -62,6 +67,8 @@
     <div id="chatBox"></div>
     <input type="text" id="message" placeholder="AChat Message">
     <button onclick="sendMessage()">Send AlexChat Message</button>
+    <button onclick="toggleEmojiBoard()">😀 Emoji Board</button>
+    <div id="emojiBoard" style="display:none; margin-top:10px;"></div>
 
     <div id="adminControls" style="margin-top:10px; display:none;">
       <button onclick="adminAction('clear')">Clear</button>
@@ -83,12 +90,31 @@
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const backend = 'https://chat-backend-pdzh.onrender.com';
 
-    if (!user) location.href = 'index.html';
+    if (!user) location.href = 'Loginscreen.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
     function openStats() {
       window.open('stats.html', '_blank');
+    }
+
+    function toggleEmojiBoard() {
+      const board = document.getElementById('emojiBoard');
+      board.style.display = board.style.display === 'none' ? 'block' : 'none';
+      if (board.innerHTML === '') {
+        const emojis = ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️'];
+        emojis.forEach(e => {
+          const span = document.createElement('span');
+          span.className = 'emoji';
+          span.innerText = e;
+          span.onclick = () => {
+            const input = document.getElementById('message');
+            input.value += e;
+            input.focus();
+          };
+          board.appendChild(span);
+        });
+      }
     }
 
     async function loadChat() {
@@ -123,10 +149,12 @@
           }).join(' ');
 
           span.innerHTML = `${rankSpan}-${sender}>> ${message}`;
-        } else {
+        } else if (line.startsWith('<<') && line.endsWith('>>')) {
           span.innerText = line;
           span.style.color = 'gray';
           span.style.fontStyle = 'italic';
+        } else {
+          span.innerText = line;
         }
 
         box.appendChild(span);
@@ -219,18 +247,7 @@
     }
 
     async function adminAction(action) {
-      await fetch(`${backend}/${action}`, { method: 'POST' });
-      loadChat();
-    }
-
-    async function adminCommand(type, target) {
-      await fetch(`${backend}/${type}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: target })
-      });
-      loadChat();
-    }
+      await fetch(`${backend}/${action}`, { method
 
     setInterval(loadChat, 2000);
     loadChat();
