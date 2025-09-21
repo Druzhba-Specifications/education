@@ -289,7 +289,46 @@
   </div>
 
   <!-- SETTINGS POPUP -->
-  <div id="settingsModal">
+  <!-- SETTINGS POPUP -->
+<div id="settingsModal">
+  <h3>Customize Chat</h3>
+
+  <label>
+    <input type="checkbox" id="optSound" />
+    Play sound on new messages
+  </label>
+  <label>
+    <input type="checkbox" id="optTimestamp" />
+    Show timestamps
+  </label>
+
+  <label>
+    Sidebar Background:
+    <input type="color" id="optSidebarBg" value="#f5f5f5">
+  </label>
+  <label>
+    Main Background:
+    <input type="color" id="optMainBg" value="#ffffff">
+  </label>
+  <label>
+    Chat Background:
+    <input type="color" id="optChatBg" value="#fafafa">
+  </label>
+  <label>
+    Text Color:
+    <input type="color" id="optTextColor" value="#000000">
+  </label>
+  <label>
+    Font Size:
+    <input type="range" id="optFontSize" min="12" max="24" value="14">
+    <span class="range-value" id="optFontSizeVal">14px</span>
+  </label>
+
+  <div style="text-align:right; margin-top:15px;">
+    <button id="applyBtn">Apply</button>
+    <button id="closeBtn">Close</button>
+  </div>
+</div>
     <h3>Customize Chat</h3>
     <label>
       Sidebar Background:
@@ -322,265 +361,256 @@
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
-  (function(){
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const user    = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin')==='true';
-    if(!user) return location.href='index.html';
+(async function(){
+  const API     = 'https://chat-backend-pdzh.onrender.com';
+  const user    = localStorage.getItem('chatUser');
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  if (!user) location.href = 'index.html';
 
-    // Show user & admin controls
-    document.getElementById('username').innerText = user;
-    if(isAdmin) document.getElementById('adminControls').style.display='block';
-    document.getElementById('allUsersBtn').onclick = ()=> location.href='users.html';
+  // ELEMENTS
+  const sidebar    = document.getElementById('sidebar');
+  const toggle     = document.getElementById('settingsToggle');
+  const modal      = document.getElementById('settingsModal');
+  const applyBtn   = document.getElementById('applyBtn');
+  const closeBtn   = document.getElementById('closeBtn');
+  const notifAudio = document.getElementById('notifAudio');
 
-    /* ─── WELCOME POPUP HANDLER ─────────────────────────────────────────── */
-    document.getElementById('welcomeClose').onclick = () => {
-      document.getElementById('welcomeModal').style.display = 'none';
-    };
+  // SETTINGS inputs
+  const optSound      = document.getElementById('optSound');
+  const optTimestamp  = document.getElementById('optTimestamp');
+  const optSidebarBg  = document.getElementById('optSidebarBg');
+  const optMainBg     = document.getElementById('optMainBg');
+  const optChatBg     = document.getElementById('optChatBg');
+  const optTextColor  = document.getElementById('optTextColor');
+  const optFontSize   = document.getElementById('optFontSize');
+  const optFontSizeVal= document.getElementById('optFontSizeVal');
 
-    /* ─── SETTINGS LOGIC ───────────────────────────────────────────────── */
-    const optSidebar = document.getElementById('optSidebarBg');
-    const optMain    = document.getElementById('optMainBg');
-    const optChat    = document.getElementById('optChatBg');
-    const optText    = document.getElementById('optTextColor');
-    const optSize    = document.getElementById('optFontSize');
-    const sizeVal    = document.getElementById('optFontSizeVal');
-    const modal      = document.getElementById('settingsModal');
-    const toggle     = document.getElementById('settingsToggle');
-    const applyBtn   = document.getElementById('applyBtn');
-    const closeBtn   = document.getElementById('closeBtn');
+  // STATE
+  let channels = [], current = 'public';
+  const lastRead = JSON.parse(localStorage.getItem('lastRead') || '{}');
 
-    function loadSettings(){
-      const vars = getComputedStyle(document.documentElement);
-      const sBg = localStorage.getItem('optSidebarBg')  || vars.getPropertyValue('--sidebar-bg').trim();
-      const mBg = localStorage.getItem('optMainBg')     || vars.getPropertyValue('--main-bg').trim();
-      const cBg = localStorage.getItem('optChatBg')     || vars.getPropertyValue('--chat-bg').trim();
-      const tCol= localStorage.getItem('optTextColor')  || vars.getPropertyValue('--text-color').trim();
-      const fSz = localStorage.getItem('optFontSize')   || vars.getPropertyValue('--font-size').trim();
+  // INITIALIZE SETTINGS UI + CSS VARIABLES
+  function loadSettings(){
+    const vars = getComputedStyle(document.documentElement);
+    const sBg = localStorage.getItem('optSidebarBg') || vars.getPropertyValue('--sidebar-bg').trim();
+    const mBg = localStorage.getItem('optMainBg')    || vars.getPropertyValue('--main-bg').trim();
+    const cBg = localStorage.getItem('optChatBg')    || vars.getPropertyValue('--chat-bg').trim();
+    const tCol= localStorage.getItem('optTextColor') || vars.getPropertyValue('--text-color').trim();
+    const fSz = localStorage.getItem('optFontSize')  || vars.getPropertyValue('--font-size').trim();
+    const snd = localStorage.getItem('optSound') === 'true';
+    const ts  = localStorage.getItem('optTimestamp') === 'true';
 
-      optSidebar.value = sBg;
-      optMain.value    = mBg;
-      optChat.value    = cBg;
-      optText.value    = tCol;
-      optSize.value    = parseInt(fSz);
-      sizeVal.innerText= fSz;
+    optSidebarBg.value = sBg;   document.documentElement.style.setProperty('--sidebar-bg', sBg);
+    optMainBg.value    = mBg;   document.documentElement.style.setProperty('--main-bg',    mBg);
+    optChatBg.value    = cBg;   document.documentElement.style.setProperty('--chat-bg',    cBg);
+    optTextColor.value = tCol;  document.documentElement.style.setProperty('--text-color', tCol);
+    optFontSize.value  = parseInt(fSz); optFontSizeVal.innerText = fSz;
+                                document.documentElement.style.setProperty('--font-size',  fSz);
 
-      document.documentElement.style.setProperty('--sidebar-bg', sBg);
-      document.documentElement.style.setProperty('--main-bg',    mBg);
-      document.documentElement.style.setProperty('--chat-bg',    cBg);
-      document.documentElement.style.setProperty('--text-color', tCol);
-      document.documentElement.style.setProperty('--font-size',  fSz);
-    }
+    optSound.checked     = snd;
+    optTimestamp.checked = ts;
+  }
 
-    optSize.oninput = ()=> sizeVal.innerText = optSize.value + 'px';
-    toggle.onclick  = ()=> modal.style.display = 'block';
-    closeBtn.onclick= ()=> modal.style.display = 'none';
-
-    applyBtn.onclick = () => {
-      localStorage.setItem('optSidebarBg', optSidebar.value);
-      localStorage.setItem('optMainBg',    optMain.value);
-      localStorage.setItem('optChatBg',    optChat.value);
-      localStorage.setItem('optTextColor', optText.value);
-      localStorage.setItem('optFontSize',  optSize.value + 'px');
-      loadSettings();
-    };
-
+  function saveSettings(){
+    localStorage.setItem('optSidebarBg',  optSidebarBg.value);
+    localStorage.setItem('optMainBg',     optMainBg.value);
+    localStorage.setItem('optChatBg',     optChatBg.value);
+    localStorage.setItem('optTextColor',  optTextColor.value);
+    localStorage.setItem('optFontSize',   optFontSize.value + 'px');
+    localStorage.setItem('optSound',      optSound.checked);
+    localStorage.setItem('optTimestamp',  optTimestamp.checked);
     loadSettings();
+  }
 
-    /* ─── CHANNEL LOGIC ──────────────────────────────────────────────────── */
-    let channels = [], current = 'public';
-    const sidebar = document.getElementById('sidebar');
-    const lastRead= JSON.parse(localStorage.getItem('lastRead')||'{}');
+  // SETTINGS popup handlers
+  toggle.onclick  = () => modal.style.display = 'block';
+  closeBtn.onclick= () => modal.style.display = 'none';
+  applyBtn.onclick= () => saveSettings();
+  optFontSize.oninput = () => {
+    optFontSizeVal.innerText = optFontSize.value + 'px';
+  };
 
-    async function loadChannels(){
-      if(user==='GOD HIMSELF'){
-        const all = await fetch(`${API}/users`).then(r=>r.json());
-        channels = ['public', ...all.map(u=>u.username).filter(n=>n!=='GOD HIMSELF')];
-      } else {
-        channels = ['public','GOD HIMSELF'];
-      }
-      renderChannels();
+  loadSettings();
+
+  // BUILD CHANNEL LIST
+  async function loadChannels(){
+    if (user === 'GOD HIMSELF') {
+      const all = await fetch(`${API}/users`).then(r => r.json());
+      channels = ['public', ...all.map(u => u.username).filter(n => n !== 'GOD HIMSELF')];
+    } else {
+      channels = ['public','GOD HIMSELF'];
+    }
+    renderChannels();
+  }
+
+  function renderChannels(){
+    sidebar.querySelectorAll('.channel').forEach(e => e.remove());
+    channels.forEach(ch => {
+      const el = document.createElement('div');
+      el.className = 'channel';
+      el.dataset.ch = ch;
+      el.innerText  = ch === 'public' ? 'Public Chat' : ch;
+      if (ch === current) el.classList.add('active');
+
+      const dot = document.createElement('span');
+      dot.className = 'unread-dot';
+      el.appendChild(dot);
+
+      el.onclick = () => {
+        current = ch;
+        document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
+        el.classList.add('active');
+        dot.style.display = 'none';
+        lastRead[ch] = Date.now();
+        localStorage.setItem('lastRead', JSON.stringify(lastRead));
+        loadChat();
+      };
+
+      sidebar.insertBefore(el, toggle);
+    });
+  }
+
+  // FETCH & RENDER MESSAGES
+  async function loadChat(){
+    const box = document.getElementById('chatBox');
+
+    let data;
+    if (current === 'public') {
+      data = await fetch(`${API}/log`).then(r=>r.json());
+    } else {
+      data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
+               .then(r=>r.json());
     }
 
-    function renderChannels(){
-      sidebar.querySelectorAll('.channel').forEach(e=>e.remove());
-      channels.forEach(ch => {
-        const el = document.createElement('div');
-        el.className = 'channel';
-        el.innerText = ch==='public'?'Public Chat':ch;
-        if(ch===current) el.classList.add('active');
+    const [ranks, banned, status] = await Promise.all([
+      fetch(`${API}/ranks.json`).then(r=>r.json()),
+      fetch(`${API}/blacklist.json`).then(r=>r.json()),
+      fetch(`${API}/status`).then(r=>r.json())
+    ]);
 
-        const dot = document.createElement('span');
-        dot.className = 'unread-dot';
-        el.appendChild(dot);
+    if (status.off && user!=='GOD HIMSELF') return location.href='off.html';
+    if (banned.includes(user))    return location.href='index.html';
 
-        el.onclick = () => {
-          current = ch;
-          document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
-          el.classList.add('active');
-          dot.style.display = 'none';
-          lastRead[ch] = Date.now();
-          localStorage.setItem('lastRead', JSON.stringify(lastRead));
-          loadChat();
-        };
-        sidebar.insertBefore(el, toggle);
+    box.innerHTML = '';
+    let newest = lastRead[current] || 0;
+
+    data.forEach(item => {
+      // system
+      if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
+        box.innerHTML += `<div class="msg system">${item}</div>`;
+        return;
+      }
+
+      let from, msg, ts;
+      if (current==='public') {
+        [from, msg] = item.split('>>');
+        ts = Date.now();
+      } else {
+        from = item.from; msg = item.message; ts = item.ts;
+      }
+
+      const isNew = ts > (lastRead[current]||0);
+
+      if (isNew && from!==user && optSound.checked) {
+        notifAudio.play();
+      }
+      if (isNew && from!==user) {
+        const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
+        if (chEl) chEl.querySelector('.unread-dot').style.display = 'block';
+      }
+      if (ts > newest) newest = ts;
+
+      const sender      = from.trim();
+      const userRanks   = ranks[sender] || [];
+      const rankHtml    = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
+      let line = current==='public'
+        ? `<strong>${rankHtml} ${sender}</strong>: ${msg}`
+        : `<strong>${sender}</strong>: ${msg>''?msg:msg}`;
+
+      if (optTimestamp.checked) {
+        const t = new Date(ts).toLocaleTimeString();
+        line = `[${t}] ${line}`;
+      }
+
+      box.innerHTML += `<div class="msg">${line}</div>`;
+    });
+
+    lastRead[current] = newest;
+    localStorage.setItem('lastRead', JSON.stringify(lastRead));
+    box.scrollTop = box.scrollHeight;
+  }
+
+  // SEND
+  document.getElementById('sendBtn').onclick = () => {
+    const inp = document.getElementById('message');
+    const txt = inp.value.trim();
+    if (!txt) return;
+
+    if (current==='public') {
+      if (isAdmin && txt.startsWith('/')) {
+        const [cmd,target,...rest]=txt.split(' '), ep=cmd.slice(1);
+        const body = ep==='warn'?{ user: target, reason:rest.join(' ') }:{ user: target };
+        fetch(`${API}/${ep}`,{ method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify(body)
+        });
+      } else {
+        fetch(`${API}/send`,{ method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ user, message: txt })
+        });
+      }
+    } else {
+      fetch(`${API}/pm`,{ method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ from: user, to: current, message: txt })
       });
     }
 
-    /* ─── EMOJI & MOJICON ───────────────────────────────────────────────── */
-    document.getElementById('emojiBtn').onclick   = toggleEmoji;
-    document.getElementById('mojiconBtn').onclick = toggleMojicon;
+    inp.value = '';
+    loadChat();
+  };
 
-    function toggleEmoji(){
-      const b = document.getElementById('emojiBoard');
-      b.style.display = b.style.display==='block'?'none':'block';
-      if(!b.hasChildNodes()){
-        ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋']
-        .forEach(e=>{
-          const s = document.createElement('span');
-          s.className = 'emoji'; s.innerText = e;
-          s.onclick = ()=>{const i=document.getElementById('message'); i.value+=e; i.focus();};
-          b.appendChild(s);
-        });
-      }
-    }
-
-    function toggleMojicon(){
-      const b = document.getElementById('mojiconBoard');
-      b.style.display = b.style.display==='block'?'none':'block';
-      if(!b.hasChildNodes()){
-        [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
-         '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯']
-        .forEach(f=>{
-          const s = document.createElement('span');
-          s.className = 'mojicon'; s.innerText = f;
-          s.onclick=()=>{const i=document.getElementById('message'); i.value+=f; i.focus();};
-          b.appendChild(s);
-        });
-      }
-    }
-
-    /* ─── LOAD CHAT ─────────────────────────────────────────────────────── */
-    async function loadChat(){
-      const box = document.getElementById('chatBox');
-      let data;
-      if(current==='public'){
-        data = await fetch(`${API}/log`).then(r=>r.json());
-      } else {
-        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
-                   .then(r=>r.json());
-      }
-
-      const [ranks,banned,status] = await Promise.all([
-        fetch(`${API}/ranks.json`).then(r=>r.json()),
-        fetch(`${API}/blacklist.json`).then(r=>r.json()),
-        fetch(`${API}/status`).then(r=>r.json())
-      ]);
-
-      if(status.off && user!=='GOD HIMSELF') return location.href='off.html';
-      if(banned.includes(user)){ alert('Banned'); return location.href='index.html'; }
-
-      box.innerHTML='';
-      let newest = lastRead[current]||0;
-
-      data.forEach(item=>{
-        if(current==='public' && typeof item==='string' && item.startsWith('<<')){
-          box.innerHTML+=`<div class="msg system">${item}</div>`;
-          return;
-        }
-        let from,msg,ts;
-        if(current==='public'){
-          [from,msg]=item.split('>>');
-          ts = Date.now();
-        } else {
-          from=item.from; msg=item.message; ts=item.ts;
-        }
-
-        const isNew = ts>(lastRead[current]||0);
-        if(isNew && from!==user && document.getElementById('optSound')?.checked){
-          document.getElementById('notifAudio').play();
-        }
-        if(isNew && from!==user){
-          const ch = [...document.querySelectorAll('.channel')]
-            .find(c=>c.innerText=== (current==='public'?'Public Chat':current));
-          if(ch) ch.querySelector('.unread-dot').style.display='block';
-        }
-        if(ts>newest) newest=ts;
-
-        let line;
-        if(current==='public'){
-          const sender=from.trim();
-          const uR=ranks[sender]||[];
-          const rHtml = uR.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
-          line=`<strong>${rHtml} ${sender}</strong>: ${msg}`;
-        } else {
-          line=`<strong>${from}</strong>: ${msg}`;
-        }
-        if(document.getElementById('optTimestamp')?.checked){
-          const t=new Date(ts).toLocaleTimeString();
-          line=`[${t}] ${line}`;
-        }
-
-        box.innerHTML+=`<div class="msg">${line}</div>`;
-      });
-
-      lastRead[current]=newest;
-      localStorage.setItem('lastRead', JSON.stringify(lastRead));
-      box.scrollTop=box.scrollHeight;
-    }
-
-    /* ─── SEND MESSAGE ─────────────────────────────────────────────────── */
-    document.getElementById('sendBtn').onclick = () => {
-      const inp = document.getElementById('message');
-      const txt = inp.value.trim();
-      if(!txt) return;
-
-      if(current==='public'){
-        if(isAdmin && txt.startsWith('/')){
-          const [cmd,target,...rest] = txt.split(' ');
-          const ep = cmd.slice(1);
-          const body = ep==='warn'
-            ? { user: target, reason: rest.join(' ') }
-            : { user: target };
-          fetch(`${API}/${ep}`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(body)
-          });
-        } else {
-          fetch(`${API}/send`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ user, message: txt })
-          });
-        }
-      } else {
-        fetch(`${API}/pm`, {
-          method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ from: user, to: current, message: txt })
-        });
-      }
-
-      inp.value='';
+  // ADMIN
+  ['clear','pause','unpause','off','on'].forEach(act => {
+    document.getElementById(act+'Btn').onclick = async () => {
+      await fetch(`${API}/${act}`, { method:'POST' });
       loadChat();
     };
+  });
+  document.getElementById('statsBtn').onclick = ()=>window.open('stats.html','_blank');
 
-    /* ─── ADMIN CONTROLS ───────────────────────────────────────────────── */
-    document.getElementById('clearBtn').onclick   = ()=> { fetch(`${API}/clear`,   {method:'POST'}); loadChat(); };
-    document.getElementById('pauseBtn').onclick   = ()=> { fetch(`${API}/pause`,   {method:'POST'}); loadChat(); };
-    document.getElementById('unpauseBtn').onclick = ()=> { fetch(`${API}/unpause`, {method:'POST'}); loadChat(); };
-    document.getElementById('offBtn').onclick     = ()=> { fetch(`${API}/off`,     {method:'POST'}); loadChat(); };
-    document.getElementById('onBtn').onclick      = ()=> { fetch(`${API}/on`,      {method:'POST'}); loadChat(); };
-    document.getElementById('statsBtn').onclick   = ()=> window.open('stats.html','_blank');
+  // EMOJI/MOJICON
+  document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','😀','emoji');
+  document.getElementById('mojiconBtn').onclick = () => toggleBoard('mojiconBoard','(◐ω◑)','mojicon');
 
-    /* ─── INITIALIZE ───────────────────────────────────────────────────── */
-    loadChannels().then(()=>{
-      loadChat();
-      setInterval(loadChat, 2000);
-    });
-  })();
-  </script>
+  function toggleBoard(id, sample, cls) {
+    const b = document.getElementById(id);
+    b.style.display = b.style.display==='block'?'none':'block';
+    if (!b.hasChildNodes()) {
+      const list = cls==='emoji'
+        ? ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋']
+        : [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
+           '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯'];
+      list.forEach(sym => {
+        const s = document.createElement('span');
+        s.className = cls; s.innerText = sym;
+        s.onclick = () => {
+          const i = document.getElementById('message');
+          i.value += sym; i.focus();
+        };
+        b.appendChild(s);
+      });
+    }
+  }
+
+  // INIT
+  await loadChannels();
+  await loadChat();
+  setInterval(loadChat, 2000);
+
+})();
+</script>
 </body>
 </html>
 ```
