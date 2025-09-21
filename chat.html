@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>AlexNET Chat</title>
   <style>
-    /* ─── CSS VARIABLES FOR THEMING ───────────────────────────────────────── */
+    /* theme variables */
     :root {
       --sidebar-bg: #f5f5f5;
       --main-bg:    #ffffff;
@@ -15,42 +15,40 @@
 
     body {
       margin: 0;
-      font-family: sans-serif;
       display: flex;
       height: 100vh;
+      font-family: sans-serif;
       background: var(--main-bg);
       color: var(--text-color);
       font-size: var(--font-size);
     }
 
-    /* ─── LEFT BAR (Channels + Settings) ─────────────────────────────────────── */
+    /* ─── SIDEBAR ───────────────────────────────────────────────────────── */
     #sidebar {
       width: 200px;
       background: var(--sidebar-bg);
       border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
       padding: 20px;
       box-sizing: border-box;
       overflow-y: auto;
-      display: flex;
-      flex-direction: column;
     }
     .channel {
       padding: 8px 12px;
       margin-bottom: 6px;
       cursor: pointer;
       border-radius: 4px;
-      user-select: none;
       position: relative;
+      user-select: none;
     }
     .channel.active {
       background: #e0e0e0;
     }
     .channel .unread-dot {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 8px;
-      height: 8px;
+      top: 10px; right: 10px;
+      width: 8px; height: 8px;
       background: red;
       border-radius: 50%;
       display: none;
@@ -64,7 +62,7 @@
       user-select: none;
     }
 
-    /* ─── MAIN CHAT AREA ───────────────────────────────────────────────────── */
+    /* ─── MAIN AREA ─────────────────────────────────────────────────────── */
     #main {
       flex: 1;
       display: flex;
@@ -83,33 +81,26 @@
       border: 1px solid #ccc;
       background: var(--chat-bg);
       padding: 10px;
-      margin-bottom: 10px;
       overflow-y: auto;
       white-space: pre-wrap;
-    }
-    .msg {
-      margin: 4px 0;
-    }
-    .msg.system {
-      font-style: italic;
-      color: gray;
+      margin-bottom: 10px;
     }
     #controls {
       display: flex;
-      align-items: center;
       margin-bottom: 10px;
     }
     input#message {
       flex: 1;
-      padding: 5px;
-      font-size: var(--font-size);
+      padding: 8px;
+      font-size: 1em;
       color: var(--text-color);
+      border: 1px solid #ccc;
     }
     button {
-      padding: 5px 10px;
       margin-left: 5px;
+      padding: 8px 12px;
       cursor: pointer;
-      font-size: var(--font-size);
+      font-size: 1em;
     }
     .emoji, .mojicon {
       font-size: 24px;
@@ -121,52 +112,10 @@
       display: none;
       margin-bottom: 10px;
     }
+    .msg { margin: 4px 0; }
+    .msg.system { font-style: italic; color: gray; }
 
-    /* ─── RANK STYLES ───────────────────────────────────────────────────────── */
-    .rank-Egg { color: black; font-weight: bold; }
-    .rank-Sigmer {
-      font-weight: bold;
-      background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-    .rank-Discorder {
-      font-weight: bold;
-      background: linear-gradient(to right, blue, darkblue, indigo, #682860, violet);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-    .rank-BEAN {
-      font-weight: bold;
-      background: linear-gradient(to right, black, #B7410E, brown, orange, yellow);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
-    .rank-OG { color: gold; font-weight: bold; }
-    .rank-Bloody { color: darkred; font-weight: bold; }
-    .rank-ADMIN {
-      font-weight: bold;
-      background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet);
-      background-size: 400% 400%;
-      -webkit-background-clip: text;
-      color: transparent;
-      animation: rainbowMove 5s infinite linear;
-    }
-    @keyframes rainbowMove {
-      0%   { background-position: 0% 50%; }
-      100% { background-position: 100% 50%; }
-    }
-
-    /* ─── ADMIN CONTROLS ─────────────────────────────────────────────────────── */
-    #adminControls {
-      margin-top: 10px;
-      display: none;
-    }
-    #adminControls button {
-      margin-right: 5px;
-    }
-
-    /* ─── SETTINGS MODAL ────────────────────────────────────────────────────── */
+    /* ─── SETTINGS MODAL ─────────────────────────────────────────────────── */
     #settingsModal {
       position: fixed;
       top: 50%; left: 50%;
@@ -176,66 +125,74 @@
       padding: 20px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.2);
       display: none;
-      z-index: 100;
+      z-index: 1000;
       width: 300px;
       box-sizing: border-box;
     }
-    #settingsModal h3 {
-      margin-top: 0;
-    }
+    #settingsModal h3 { margin-top: 0; }
     #settingsModal label {
       display: block;
       margin: 10px 0;
+      font-size: 0.9em;
       cursor: pointer;
     }
     #settingsModal input[type="color"],
     #settingsModal input[type="range"] {
-      vertical-align: middle;
       margin-left: 8px;
+      vertical-align: middle;
     }
     #settingsModal .range-value {
       margin-left: 8px;
       font-weight: bold;
     }
+    #settingsModal button {
+      margin-left: 5px;
+      padding: 5px 10px;
+    }
+
+    /* ─── ADMIN CONTROLS ─────────────────────────────────────────────────── */
+    #adminControls {
+      margin-top: 10px;
+      display: none;
+    }
+    #adminControls button {
+      margin-right: 5px;
+    }
   </style>
 </head>
 <body>
-
-  <!-- LEFT BAR -->
+  <!-- SIDEBAR -->
   <div id="sidebar">
-    <!-- channels injected here -->
+    <!-- Channels injected via JS -->
     <div id="settingsToggle">⚙️ Settings</div>
   </div>
 
-  <!-- MAIN CHAT AREA -->
+  <!-- MAIN AREA -->
   <div id="main">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
     </div>
-
     <div id="chatBox"></div>
-
     <div id="controls">
-      <input type="text" id="message" placeholder="AChat Message" />
-      <button onclick="sendMessage()">Send</button>
-      <button onclick="toggleEmojiBoard()">😀 Emoji Board</button>
-      <button onclick="toggleMojiconBoard()">(◐ω◑) Mojicon Board</button>
+      <input type="text" id="message" placeholder="Type a message…" />
+      <button id="sendBtn">Send</button>
+      <button id="emojiBtn">😀</button>
+      <button id="mojiconBtn">(◐ω◑)</button>
     </div>
     <div id="emojiBoard"></div>
     <div id="mojiconBoard"></div>
-
     <div id="adminControls">
-      <button onclick="adminAction('clear')">Clear</button>
-      <button onclick="adminAction('pause')">Pause</button>
-      <button onclick="adminAction('unpause')">Unpause</button>
-      <button onclick="adminAction('off')">Off</button>
-      <button onclick="adminAction('on')">On</button>
-      <button onclick="openStats()">Stats</button>
+      <button id="clearBtn">Clear</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="unpauseBtn">Unpause</button>
+      <button id="offBtn">Off</button>
+      <button id="onBtn">On</button>
+      <button id="statsBtn">Stats</button>
     </div>
   </div>
 
-  <!-- SETTINGS MODAL -->
+  <!-- SETTINGS POPUP -->
   <div id="settingsModal">
     <h3>Customize Chat</h3>
     <label>
@@ -259,160 +216,262 @@
       <input type="range" id="optFontSize" min="12" max="24" value="14">
       <span class="range-value" id="optFontSizeVal">14px</span>
     </label>
-    <button id="applyCustom">Apply</button>
-    <button id="closeSettings">Close</button>
+    <div style="text-align:right; margin-top:15px;">
+      <button id="applyBtn">Apply</button>
+      <button id="closeBtn">Close</button>
+    </div>
   </div>
 
   <!-- Notification Sound -->
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
-  (function() {
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const current = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!current) return location.href = 'index.html';
+  (function(){
+    const API        = 'https://chat-backend-pdzh.onrender.com';
+    const user       = localStorage.getItem('chatUser');
+    const isAdmin    = localStorage.getItem('isAdmin')==='true';
+    if(!user) return location.href='index.html';
+    document.getElementById('username').innerText = user;
+    if(isAdmin) document.getElementById('adminControls').style.display='block';
+    document.getElementById('allUsersBtn').onclick = ()=> location.href='users.html';
 
-    // Show username
-    document.getElementById('username').innerText = current;
-    if (isAdmin) document.getElementById('adminControls').style.display = 'block';
-    document.getElementById('allUsersBtn').onclick = () => location.href = 'users.html';
+    // SETTINGS ELEMENTS
+    const optSidebar  = document.getElementById('optSidebarBg');
+    const optMain     = document.getElementById('optMainBg');
+    const optChat     = document.getElementById('optChatBg');
+    const optText     = document.getElementById('optTextColor');
+    const optSize     = document.getElementById('optFontSize');
+    const sizeVal     = document.getElementById('optFontSizeVal');
+    const modal       = document.getElementById('settingsModal');
+    const toggle      = document.getElementById('settingsToggle');
+    const applyBtn    = document.getElementById('applyBtn');
+    const closeBtn    = document.getElementById('closeBtn');
 
-    // SETTINGS elements
-    const optSidebarBg  = document.getElementById('optSidebarBg');
-    const optMainBg     = document.getElementById('optMainBg');
-    const optChatBg     = document.getElementById('optChatBg');
-    const optTextColor  = document.getElementById('optTextColor');
-    const optFontSize   = document.getElementById('optFontSize');
-    const optFontSizeVal= document.getElementById('optFontSizeVal');
-    const settingsModal = document.getElementById('settingsModal');
-    const settingsToggle= document.getElementById('settingsToggle');
+    function loadSettings(){
+      const vars = getComputedStyle(document.documentElement);
+      const sBg = localStorage.getItem('optSidebarBg')   || vars.getPropertyValue('--sidebar-bg').trim();
+      const mBg = localStorage.getItem('optMainBg')      || vars.getPropertyValue('--main-bg').trim();
+      const cBg = localStorage.getItem('optChatBg')      || vars.getPropertyValue('--chat-bg').trim();
+      const tCol= localStorage.getItem('optTextColor')   || vars.getPropertyValue('--text-color').trim();
+      const fSz= localStorage.getItem('optFontSize')     || vars.getPropertyValue('--font-size').trim();
+      optSidebar.value = sBg;
+      optMain.value    = mBg;
+      optChat.value    = cBg;
+      optText.value    = tCol;
+      optSize.value    = parseInt(fSz);
+      sizeVal.innerText= fSz;
 
-    // load saved custom values
-    function loadCustom() {
-      const sidebarBg = localStorage.getItem('optSidebarBg')  || getComputedStyle(document.documentElement).getPropertyValue('--sidebar-bg').trim();
-      const mainBg    = localStorage.getItem('optMainBg')     || getComputedStyle(document.documentElement).getPropertyValue('--main-bg').trim();
-      const chatBg    = localStorage.getItem('optChatBg')     || getComputedStyle(document.documentElement).getPropertyValue('--chat-bg').trim();
-      const textCol   = localStorage.getItem('optTextColor')  || getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
-      const fontSize  = localStorage.getItem('optFontSize')   || getComputedStyle(document.documentElement).getPropertyValue('--font-size').trim();
-
-      optSidebarBg.value = sidebarBg;
-      optMainBg.value    = mainBg;
-      optChatBg.value    = chatBg;
-      optTextColor.value = textCol;
-      optFontSize.value  = parseInt(fontSize);
-      optFontSizeVal.innerText = fontSize;
-
-      document.documentElement.style.setProperty('--sidebar-bg', sidebarBg);
-      document.documentElement.style.setProperty('--main-bg', mainBg);
-      document.documentElement.style.setProperty('--chat-bg', chatBg);
-      document.documentElement.style.setProperty('--text-color', textCol);
-      document.documentElement.style.setProperty('--font-size', fontSize);
+      document.documentElement.style.setProperty('--sidebar-bg', sBg);
+      document.documentElement.style.setProperty('--main-bg',    mBg);
+      document.documentElement.style.setProperty('--chat-bg',    cBg);
+      document.documentElement.style.setProperty('--text-color', tCol);
+      document.documentElement.style.setProperty('--font-size',  fSz);
     }
 
-    // on range change
-    optFontSize.oninput = () => {
-      optFontSizeVal.innerText = optFontSize.value + 'px';
+    optSize.oninput = ()=> sizeVal.innerText = optSize.value+'px';
+    toggle.onclick  = ()=> modal.style.display='block';
+    closeBtn.onclick= ()=> modal.style.display='none';
+
+    applyBtn.onclick= ()=>{
+      localStorage.setItem('optSidebarBg', optSidebar.value);
+      localStorage.setItem('optMainBg',    optMain.value);
+      localStorage.setItem('optChatBg',    optChat.value);
+      localStorage.setItem('optTextColor', optText.value);
+      localStorage.setItem('optFontSize',  optSize.value+'px');
+      loadSettings();
     };
 
-    // open/close settings
-    settingsToggle.onclick = () => settingsModal.style.display = 'block';
-    document.getElementById('closeSettings').onclick = () => settingsModal.style.display = 'none';
-
-    // apply customizations
-    document.getElementById('applyCustom').onclick = () => {
-      localStorage.setItem('optSidebarBg',  optSidebarBg.value);
-      localStorage.setItem('optMainBg',     optMainBg.value);
-      localStorage.setItem('optChatBg',     optChatBg.value);
-      localStorage.setItem('optTextColor',  optTextColor.value);
-      localStorage.setItem('optFontSize',   optFontSize.value + 'px');
-
-      document.documentElement.style.setProperty('--sidebar-bg', optSidebarBg.value);
-      document.documentElement.style.setProperty('--main-bg',    optMainBg.value);
-      document.documentElement.style.setProperty('--chat-bg',    optChatBg.value);
-      document.documentElement.style.setProperty('--text-color', optTextColor.value);
-      document.documentElement.style.setProperty('--font-size',  optFontSize.value + 'px');
-    };
-
-    // retain settings UI state
-    loadCustom();
-
-    // NOTIFICATION & OTHER SETTINGS
-    const optSoundEl     = document.getElementById('optSound');
-    const optTimestampEl = document.getElementById('optTimestamp');
-    optSoundEl.checked     = localStorage.getItem('optSound') === 'true';
-    optTimestampEl.checked = localStorage.getItem('optTimestamp') === 'true';
-    function saveSettings() {
-      localStorage.setItem('optSound', optSoundEl.checked);
-      localStorage.setItem('optTimestamp', optTimestampEl.checked);
-    }
-    document.getElementById('closeSettings').onclick = () => {
-      saveSettings();
-      settingsModal.style.display = 'none';
-    };
+    loadSettings();
 
     // CHANNEL LOGIC
-    let channels = [];
-    let currentChannel = 'public';
-    const lastRead = JSON.parse(localStorage.getItem('lastRead') || '{}');
+    let channels=[], current='public';
+    const sidebar = document.getElementById('sidebar');
+    const lastRead= JSON.parse(localStorage.getItem('lastRead')||'{}');
 
-    async function loadChannels() {
-      if (current === 'GOD HIMSELF') {
-        const all = await fetch(`${API}/users`).then(r => r.json());
-        channels = ['public', ...all.map(u => u.username).filter(n => n !== 'GOD HIMSELF')];
+    async function loadChannels(){
+      if(user==='GOD HIMSELF'){
+        const all = await fetch(`${API}/users`).then(r=>r.json());
+        channels=['public', ...all.map(u=>u.username).filter(n=>n!=='GOD HIMSELF')];
       } else {
-        channels = ['public', 'GOD HIMSELF'];
+        channels=['public','GOD HIMSELF'];
       }
       renderChannels();
     }
 
-    function renderChannels() {
-      const sb = document.getElementById('sidebar');
-      sb.querySelectorAll('.channel').forEach(el => el.remove());
+    function renderChannels(){
+      sidebar.querySelectorAll('.channel').forEach(e=>e.remove());
       channels.forEach(ch => {
-        const div = document.createElement('div');
-        div.className = 'channel';
-        div.innerText = ch === 'public' ? 'Public Chat' : ch;
-        if (ch === currentChannel) div.classList.add('active');
+        const d = document.createElement('div');
+        d.className='channel';
+        d.innerText = ch==='public'?'Public Chat':ch;
+        if(ch===current) d.classList.add('active');
 
         const dot = document.createElement('span');
-        dot.className = 'unread-dot';
-        div.appendChild(dot);
+        dot.className='unread-dot';
+        d.appendChild(dot);
 
-        div.onclick = () => {
-          currentChannel = ch;
-          document.querySelectorAll('.channel').forEach(c => c.classList.remove('active'));
-          div.classList.add('active');
-          dot.style.display = 'none';
-          lastRead[ch] = Date.now();
+        d.onclick = ()=>{
+          current=ch;
+          document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
+          d.classList.add('active');
+          dot.style.display='none';
+          lastRead[ch]=Date.now();
           localStorage.setItem('lastRead', JSON.stringify(lastRead));
           loadChat();
         };
-        sb.insertBefore(div, settingsToggle);
+        sidebar.insertBefore(d, toggle);
       });
     }
 
     // EMOJI & MOJICON
-    function toggleEmojiBoard() {/*...same as before...*/}
-    function toggleMojiconBoard() {/*...same as before...*/}
+    document.getElementById('emojiBtn').onclick   = toggleEmoji;
+    document.getElementById('mojiconBtn').onclick = toggleMojicon;
 
-    // LOAD CHAT
-    async function loadChat() {
-      /* identical logic to previous snippet, including system message detection */
-      // fetch data, then:
-      const box = document.getElementById('chatBox');
-      let data = /* fetch public or pm */;
-      // ...
-      // render system messages with <div class="msg system">...</div>
-      // ...
+    function toggleEmoji(){
+      const b = document.getElementById('emojiBoard');
+      b.style.display = b.style.display==='block'?'none':'block';
+      if(!b.hasChildNodes()){
+        ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋']
+        .forEach(e=>{
+          const s=document.createElement('span');
+          s.className='emoji'; s.innerText=e;
+          s.onclick=()=>{const i=document.getElementById('message');i.value+=e;i.focus();};
+          b.appendChild(s);
+        });
+      }
     }
 
-    // SEND & ADMIN HANDLERS
-    /* same as previous snippet */
+    function toggleMojicon(){
+      const b = document.getElementById('mojiconBoard');
+      b.style.display = b.style.display==='block'?'none':'block';
+      if(!b.hasChildNodes()){
+        [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
+         '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯']
+        .forEach(f=>{
+          const s=document.createElement('span');
+          s.className='mojicon'; s.innerText=f;
+          s.onclick=()=>{const i=document.getElementById('message');i.value+=f;i.focus();};
+          b.appendChild(s);
+        });
+      }
+    }
 
-    // INITIALIZE
-    loadChannels().then(() => {
-      renderChannels();
+    // LOAD CHAT (public or PM)
+    async function loadChat(){
+      const box = document.getElementById('chatBox');
+      let data;
+      if(current==='public'){
+        data = await fetch(`${API}/log`).then(r=>r.json());
+      } else {
+        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`).then(r=>r.json());
+      }
+
+      const [ranks, banned, status] = await Promise.all([
+        fetch(`${API}/ranks.json`).then(r=>r.json()),
+        fetch(`${API}/blacklist.json`).then(r=>r.json()),
+        fetch(`${API}/status`).then(r=>r.json())
+      ]);
+
+      if(status.off && user!=='GOD HIMSELF') return location.href='off.html';
+      if(banned.includes(user)){ alert('You are banned.'); return location.href='index.html'; }
+
+      box.innerHTML='';
+      let newest = lastRead[current]||0;
+
+      data.forEach(item=>{
+        // public system messages
+        if(current==='public' && typeof item==='string' && item.startsWith('<<')){
+          box.innerHTML+=`<div class="msg system">${item}</div>`;
+          return;
+        }
+        let from,msg,ts;
+        if(current==='public'){
+          [from,msg]=item.split('>>');
+          ts=Date.now();
+        } else {
+          from=item.from; msg=item.message; ts=item.ts;
+        }
+
+        const isNew = ts>(lastRead[current]||0);
+        if(isNew && from!==user && document.getElementById('optSound').checked){
+          document.getElementById('notifAudio').play();
+        }
+        if(isNew && from!==user){
+          const chDiv = [...document.querySelectorAll('.channel')]
+            .find(c=>c.innerText=== (current==='public'?'Public Chat':current));
+          if(chDiv) chDiv.querySelector('.unread-dot').style.display='block';
+        }
+        if(ts>newest) newest=ts;
+
+        let line;
+        if(current==='public'){
+          const sender=from.trim();
+          const userRanks=ranks[sender]||[];
+          const rHtml=userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
+          line=`<strong>${rHtml} ${sender}</strong>: ${msg}`;
+        } else {
+          line=`<strong>${from}</strong>: ${msg}`;
+        }
+
+        if(document.getElementById('optTimestamp')?.checked){
+          const t=new Date(ts).toLocaleTimeString();
+          line=`[${t}] ${line}`;
+        }
+
+        box.innerHTML+=`<div class="msg">${line}</div>`;
+      });
+
+      lastRead[current]=newest;
+      localStorage.setItem('lastRead', JSON.stringify(lastRead));
+      box.scrollTop=box.scrollHeight;
+    }
+
+    // SEND MESSAGE
+    document.getElementById('sendBtn').onclick = sendMessage;
+    function sendMessage(){
+      const inp=document.getElementById('message'), txt=inp.value.trim();
+      if(!txt) return;
+
+      if(current==='public'){
+        if(isAdmin && txt.startsWith('/')){
+          const [cmd,target,...rest]=txt.split(' '), ep=cmd.slice(1);
+          const body = ep==='warn'
+            ? { user: target, reason: rest.join(' ') }
+            : { user: target };
+          fetch(`${API}/${ep}`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(body)
+          });
+        } else {
+          fetch(`${API}/send`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ user, message: txt })
+          });
+        }
+      } else {
+        fetch(`${API}/pm`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ from: user, to: current, message: txt })
+        });
+      }
+
+      inp.value='';
+      loadChat();
+    }
+
+    // ADMIN ACTIONS
+    document.getElementById('clearBtn').onclick   = ()=>{ fetch(`${API}/clear`,{method:'POST'}); loadChat(); };
+    document.getElementById('pauseBtn').onclick   = ()=>{ fetch(`${API}/pause`,{method:'POST'}); loadChat(); };
+    document.getElementById('unpauseBtn').onclick = ()=>{ fetch(`${API}/unpause`,{method:'POST'}); loadChat(); };
+    document.getElementById('offBtn').onclick     = ()=>{ fetch(`${API}/off`,{method:'POST'}); loadChat(); };
+    document.getElementById('onBtn').onclick      = ()=>{ fetch(`${API}/on`,{method:'POST'}); loadChat(); };
+    document.getElementById('statsBtn').onclick   = ()=> window.open('stats.html','_blank');
+
+    // INITIALIZE EVERYTHING
+    loadChannels().then(()=>{
       loadChat();
       setInterval(loadChat, 2000);
     });
