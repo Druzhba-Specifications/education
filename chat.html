@@ -2,7 +2,7 @@
 <html>
 <head><title>AlexNET Education</title></head>
 <body>
-  <h2>Welcome, <span id="username"></span></h2>
+  <h2>Welcome to AlexNET, <span id="username"></span>. Chat freely and say anything, anywhere!</h2>
   <div id="chatBox" style="white-space:pre-wrap; border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
   <input type="text" id="message" placeholder="Type a message">
   <button onclick="sendMessage()">Send</button>
@@ -24,24 +24,14 @@
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
     async function loadChat() {
-      const res = await fetch('https://chat-backend-pdzh.onrender.com/log');
+      const res = await fetch('/log');
       const log = await res.json();
       const box = document.getElementById('chatBox');
       box.innerText = log.join('\n');
       box.scrollTop = box.scrollHeight;
-    }
 
-    async function sendMessage() {
-      const msg = document.getElementById('message').value;
+      const status = await fetch('/status').then(r => r.json());
+      if (status.off && !isAdmin) location.href = 'off.html';
 
-      if (isAdmin && msg.startsWith('/')) {
-        const [cmd, arg, ...rest] = msg.split(' ');
-        const payload = { user: arg, reason: arg, message: rest.join(' ') };
-
-        if (cmd === '/ban') await fetch('/ban', { method: 'POST', headers
-
-    setInterval(loadChat, 2000);
-    loadChat();
-  </script>
-</body>
-</html>
+      const banned = await fetch('/blacklist.json').then(r => r.json());
+      if (banned.includes
