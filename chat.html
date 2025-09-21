@@ -4,6 +4,33 @@
   <title>Chat Room</title>
   <style>
     body { font-family: sans-serif; }
+    .rank-Sigmer {
+      font-weight: bold;
+      background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .rank-OG {
+      color: gold;
+      font-weight: bold;
+    }
+    .rank-Bloody {
+      color: darkred;
+      font-weight: bold;
+    }
+    .rank-ADMIN {
+      font-weight: bold;
+      background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet);
+      background-size: 400% 400%;
+      -webkit-background-clip: text;
+      color: transparent;
+      animation: rainbowMove 5s infinite linear;
+    }
+  
+    @keyframes rainbowMove {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
     #chatBox {
       white-space: pre-wrap;
       border: 1px solid #ccc;
