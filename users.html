@@ -14,11 +14,9 @@
       text-align: center;
     }
     .user-card img {
-      width: 80px;
-      height: 80px;
+      width: 80px; height: 80px;
       border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 8px;
+      object-fit: cover; margin-bottom: 8px;
     }
     .username { font-weight: bold; margin-bottom: 4px; }
     .ranks { font-size: 0.9em; color: #555; margin-bottom: 8px; }
@@ -38,100 +36,111 @@
   </div>
 
   <script>
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const user    = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    (async function() {
+      const API     = 'https://chat-backend-pdzh.onrender.com';
+      const current = localStorage.getItem('chatUser');
+      const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    // If not logged in, kick to index
-    if (!user) {
-      return location.href = 'index.html';
-    }
+      // If not logged in, kick to index
+      if (!current) {
+        return location.href = 'index.html';
+      }
 
-    // 1) Fetch /users first to see if *you* are banned
-    fetch(`${API}/users`)
-      .then(r => r.json())
-      .then(users => {
-        const me = users.find(u => u.username === user);
-        if (me && me.banned && user !== 'GOD HIMSELF') {
-          alert('You have been banned.');
-          return location.href = 'index.html';
-        }
-        // Otherwise proceed to load full listing
-        loadUsers();
-      });
+      // Fetch /users to check your ban status
+      let users;
+      try {
+        users = await fetch(`${API}/users`).then(r => r.json());
+      } catch {
+        document.getElementById('userList').innerText = 'Error loading users';
+        return;
+      }
+      const me = users.find(u => u.username === current);
+      if (me && me.banned && current !== 'GOD HIMSELF') {
+        alert('You have been banned.');
+        return location.href = 'index.html';
+      }
 
-    // 2) loadUsers(): fetch users + ranks + render
-    async function loadUsers() {
+      // Fetch ranks once
+      let ranks = {};
+      try {
+        ranks = await fetch(`${API}/ranks.json`).then(r => r.json());
+      } catch {}
+
       const listEl = document.getElementById('userList');
-      listEl.innerHTML = 'Loading…';
 
-      const [ users, ranks ] = await Promise.all([
-        fetch(`${API}/users`).then(r => r.json()),
-        fetch(`${API}/ranks.json`).then(r => r.json())
-      ]);
-
-      listEl.innerHTML = '';
-      users.forEach(u => {
-        const card = document.createElement('div');
-        card.className = 'user-card';
-
-        // Avatar: local placeholder.png or remote asset
-        const img = document.createElement('img');
-        img.src = u.profilePic === 'placeholder.png'
-          ? 'placeholder.png'
-          : `${API}/assets/${u.profilePic}`;
-        card.appendChild(img);
-
-        // Username
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'username';
-        nameDiv.innerText = u.username;
-        card.appendChild(nameDiv);
-
-        // Ranks
-        const userRanks = ranks[u.username] || [];
-        const ranksDiv = document.createElement('div');
-        ranksDiv.className = 'ranks';
-        ranksDiv.innerText = userRanks.length
-          ? `Ranks: ${userRanks.join(', ')}`
-          : 'Ranks: none';
-        card.appendChild(ranksDiv);
-
-        // Online/Offline
-        const statusDiv = document.createElement('div');
-        statusDiv.className = u.online ? 'online' : 'offline';
-        statusDiv.innerText = u.online ? 'Online' : 'Offline';
-        card.appendChild(statusDiv);
-
-        // Banned badge
-        if (u.banned) {
-          const banDiv = document.createElement('div');
-          banDiv.className = 'banned';
-          banDiv.innerText = 'BANNED';
-          card.appendChild(banDiv);
+      async function render() {
+        listEl.innerHTML = 'Loading…';
+        try {
+          users = await fetch(`${API}/users`).then(r => r.json());
+        } catch {
+          listEl.innerText = 'Error loading users';
+          return;
         }
+        listEl.innerHTML = '';
 
-        // Admin Ban/Unban buttons
-        if (isAdmin) {
-          const btn = document.createElement('button');
-          btn.className = 'admin-btn';
-          btn.innerText = u.banned ? 'Unban' : 'Ban';
-          btn.onclick = async () => {
-            await fetch(`${API}/${u.banned ? 'unban' : 'ban'}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ user: u.username })
-            });
-            loadUsers();
-          };
-          card.appendChild(btn);
-        }
+        users.forEach(u => {
+          const card = document.createElement('div');
+          card.className = 'user-card';
 
-        listEl.appendChild(card);
-      });
-    }
+          // Avatar
+          const img = document.createElement('img');
+          img.src = u.profilePic === 'placeholder.png'
+            ? 'placeholder.png'
+            : `${API}/assets/${u.profilePic}`;
+          card.appendChild(img);
 
-    document.getElementById('refresh').onclick = loadUsers;
+          // Name
+          const nameDiv = document.createElement('div');
+          nameDiv.className = 'username';
+          nameDiv.innerText = u.username;
+          card.appendChild(nameDiv);
+
+          // Ranks
+          const userRanks = ranks[u.username] || [];
+          const ranksDiv = document.createElement('div');
+          ranksDiv.className = 'ranks';
+          ranksDiv.innerText = userRanks.length
+            ? `Ranks: ${userRanks.join(', ')}`
+            : 'Ranks: none';
+          card.appendChild(ranksDiv);
+
+          // Online/Offline
+          const statDiv = document.createElement('div');
+          statDiv.className = u.online ? 'online' : 'offline';
+          statDiv.innerText = u.online ? 'Online' : 'Offline';
+          card.appendChild(statDiv);
+
+          // Banned badge
+          if (u.banned) {
+            const banDiv = document.createElement('div');
+            banDiv.className = 'banned';
+            banDiv.innerText = 'BANNED';
+            card.appendChild(banDiv);
+          }
+
+          // Admin Ban/Unban
+          if (isAdmin) {
+            const btn = document.createElement('button');
+            btn.className = 'admin-btn';
+            btn.innerText = u.banned ? 'Unban' : 'Ban';
+            btn.onclick = async () => {
+              await fetch(`${API}/${u.banned ? 'unban' : 'ban'}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user: u.username })
+              });
+              render();
+            };
+            card.appendChild(btn);
+          }
+
+          listEl.appendChild(card);
+        });
+      }
+
+      document.getElementById('refresh').onclick = render;
+      render();
+    })();
   </script>
 </body>
 </html>
