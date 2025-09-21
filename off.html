@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat Offline</title>
+</head>
+<body>
+  <h2>🚧 Chat is currently offline</h2>
+  <p>The site is under maintenance or temporarily disabled. Please check back later.</p>
+
+  <script>
+    setInterval(async () => {
+      const res = await fetch('https://chat-backend-pdzh.onrender.com/status');
+      const status = await res.json();
+      if (!status.off) window.location.href = 'Loginscreen.html';
+    }, 5000);
+  </script>
+</body>
+</html>
