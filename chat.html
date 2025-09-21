@@ -3,7 +3,13 @@
 <head>
   <title>Chat Room</title>
   <style>
-    body { font-family: sans-serif; }
+    body { font-family: sans-serif; display: flex; gap: 20px; }
+    #main { flex: 1; }
+    #sidebar {
+      width: 200px;
+      border-left: 1px solid #ccc;
+      padding-left: 10px;
+    }
     .rank-Sigmer {
       font-weight: bold;
       background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
@@ -41,20 +47,35 @@
     #adminControls button {
       margin-right: 5px;
     }
+    .userEntry {
+      margin-bottom: 8px;
+    }
+    .userEntry button {
+      margin-left: 5px;
+      font-size: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>Welcome, <span id="username"></span></h2>
-  <div id="chatBox"></div>
-  <input type="text" id="message" placeholder="Type a message">
-  <button onclick="sendMessage()">Send</button>
+  <div id="main">
+    <h2>Welcome, <span id="username"></span></h2>
+    <div id="chatBox"></div>
+    <input type="text" id="message" placeholder="Type a message">
+    <button onclick="sendMessage()">Send</button>
 
-  <div id="adminControls" style="margin-top:10px; display:none;">
-    <button onclick="adminAction('clear')">Clear</button>
-    <button onclick="adminAction('pause')">Pause</button>
-    <button onclick="adminAction('unpause')">Unpause</button>
-    <button onclick="adminAction('off')">Off</button>
-    <button onclick="adminAction('on')">On</button>
+    <div id="adminControls" style="margin-top:10px; display:none;">
+      <button onclick="adminAction('clear')">Clear</button>
+      <button onclick="adminAction('pause')">Pause</button>
+      <button onclick="adminAction('unpause')">Unpause</button>
+      <button onclick="adminAction('off')">Off</button>
+      <button onclick="adminAction('on')">On</button>
+      <button onclick="openStats()">Stats</button>
+    </div>
+  </div>
+
+  <div id="sidebar">
+    <h3>Users</h3>
+    <div id="userList"></div>
   </div>
 
   <script>
@@ -62,44 +83,87 @@
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const backend = 'https://chat-backend-pdzh.onrender.com';
 
-    if (!user) location.href = 'index.html';
+    if (!user) location.href = 'Loginscreen.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
+    function openStats() {
+      window.open('stats.html', '_blank');
+    }
+
     async function loadChat() {
-      const [logRes, ranksRes] = await Promise.all([
+      const [logRes, ranksRes, bannedRes] = await Promise.all([
         fetch(`${backend}/log`),
-        fetch(`${backend}/ranks.json`)
+        fetch(`${backend}/ranks.json`),
+        fetch(`${backend}/blacklist.json`)
       ]);
       const log = await logRes.json();
       const ranks = await ranksRes.json();
+      const banned = await bannedRes.json();
 
       const box = document.getElementById('chatBox');
+      const userList = document.getElementById('userList');
       box.innerHTML = '';
+      userList.innerHTML = '';
+
+      const seenUsers = new Set();
 
       log.forEach(line => {
-        const [rawUser, message] = line.split('>>');
-        const sender = rawUser.trim();
-        const userRanks = ranks[sender] || [];
+        const span = document.createElement('span');
 
+        if (line.includes('>>')) {
+          const [rawUser, message] = line.split('>>');
+          const sender = rawUser.trim();
+          seenUsers.add(sender);
+          const userRanks = ranks[sender] || [];
+
+          const rankSpan = userRanks.map(rank => {
+            const safeRank = rank.replace(/\s+/g, '-');
+            return `<span class="rank-${safeRank}">${rank}</span>`;
+          }).join(' ');
+
+          span.innerHTML = `${rankSpan}-${sender}>> ${message}`;
+        } else {
+          span.innerText = line;
+          span.style.color = 'gray';
+          span.style.fontStyle = 'italic';
+        }
+
+        box.appendChild(span);
+        box.appendChild(document.createElement('br'));
+      });
+
+      seenUsers.forEach(name => {
+        const entry = document.createElement('div');
+        entry.className = 'userEntry';
+
+        const userRanks = ranks[name] || [];
         const rankSpan = userRanks.map(rank => {
           const safeRank = rank.replace(/\s+/g, '-');
           return `<span class="rank-${safeRank}">${rank}</span>`;
         }).join(' ');
 
-        const lineHTML = `${rankSpan}-${sender}>> ${message}`;
-        const span = document.createElement('span');
-        span.innerHTML = lineHTML;
-        box.appendChild(span);
-        box.appendChild(document.createElement('br'));
-      });
+        entry.innerHTML = `${rankSpan} ${name}`;
 
-      box.scrollTop = box.scrollHeight;
+        if (isAdmin) {
+          const banBtn = document.createElement('button');
+          banBtn.innerText = 'Ban';
+          banBtn.onclick = () => adminCommand('ban', name);
+
+          const unbanBtn = document.createElement('button');
+          unbanBtn.innerText = 'Unban';
+          unbanBtn.onclick = () => adminCommand('unban', name);
+
+          entry.appendChild(banBtn);
+          entry.appendChild(unbanBtn);
+        }
+
+        userList.appendChild(entry);
+      });
 
       const status = await fetch(`${backend}/status`).then(r => r.json());
       if (status.off && !isAdmin) location.href = 'off.html';
 
-      const banned = await fetch(`${backend}/blacklist.json`).then(r => r.json());
       if (banned.includes(user)) {
         alert('You are banned.');
         location.href = 'Loginscreen.html';
@@ -159,8 +223,18 @@
       loadChat();
     }
 
+    async function adminCommand(type, target) {
+      await fetch(`${backend}/${type}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: target })
+      });
+      loadChat();
+    }
+
     setInterval(loadChat, 2000);
     loadChat();
   </script>
 </body>
 </html>
+
