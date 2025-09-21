@@ -1,24 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <title>All Users</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     .user-list { display: flex; flex-wrap: wrap; gap: 20px; }
     .user-card {
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      padding: 10px;
-      width: 160px;
-      text-align: center;
+      width: 160px; border: 1px solid #ccc; border-radius: 8px;
+      padding: 10px; text-align: center;
     }
     .user-card img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-bottom: 8px;
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover; margin-bottom: 8px;
     }
     .online { color: green; }
     .offline { color: gray; }
@@ -35,12 +29,12 @@
   </div>
 
   <script>
-    const API = 'https://chat-backend-pdzh.onrender.com';
+    const API     = 'https://chat-backend-pdzh.onrender.com';
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
     async function loadUsers() {
       const listEl = document.getElementById('userList');
-      listEl.innerHTML = 'Loading…';
+      listEl.innerText = 'Loading…';
 
       const users = await fetch(`${API}/users`).then(r => r.json());
       listEl.innerHTML = '';
@@ -54,18 +48,17 @@
         img.src = `${API}/assets/${u.profilePic}`;
         card.appendChild(img);
 
-        // Username
+        // Name & status
         const name = document.createElement('div');
         name.innerText = u.username;
         card.appendChild(name);
 
-        // Online/Offline
         const status = document.createElement('div');
         status.innerText = u.online ? 'Online' : 'Offline';
         status.className = u.online ? 'online' : 'offline';
         card.appendChild(status);
 
-        // Admin Ban/Unban
+        // Ban/Unban if admin
         if (isAdmin) {
           const btn = document.createElement('button');
           btn.className = 'admin-btn';
