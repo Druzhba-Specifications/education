@@ -1,55 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>AlexNET Statistics</title>
+  <meta charset="UTF-8" />
+  <title>Chat Statistics</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    canvas { max-width: 600px; }
+    body { font-family: sans-serif; margin: 20px; }
+    h1, h2 { margin-top: 1.5em; }
+    #summary { display: flex; flex-wrap: wrap; gap: 20px; }
+    .metric { border: 1px solid #ccc; border-radius: 6px; padding: 10px 15px; width: 180px; }
+    .metric h3 { margin: 0 0 5px; font-size: 1em; }
+    .chart-container { width: 100%; max-width: 600px; margin-top: 20px; }
+    table { border-collapse: collapse; width: 100%; max-width: 600px; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+    th { background: #f5f5f5; }
   </style>
 </head>
 <body>
-  <h2>📊 Chat Statistics</h2>
-  <p><strong>Most Recent Message:</strong> <span id="recent"></span></p>
-  <p><strong>Server Traffic:</strong> <span id="traffic"></span> requests/min</p>
-  <p><strong>Connection Strength:</strong> <span id="ping"></span> ms</p>
 
-  <h3>Messages Sent (Last 10 Days)</h3>
-  <canvas id="msgChart"></canvas>
+  <h1>AlexNET Chat Statistics</h1>
+
+  <div id="summary">
+    <div class="metric">
+      <h3>Total Messages</h3>
+      <div id="totalMessages">–</div>
+    </div>
+    <div class="metric">
+      <h3>System Messages</h3>
+      <div id="systemMessages">–</div>
+    </div>
+    <div class="metric">
+      <h3>Unique Users</h3>
+      <div id="uniqueUsers">–</div>
+    </div>
+    <div class="metric">
+      <h3>Avg. Msg Length</h3>
+      <div id="avgLength">–</div>
+    </div>
+    <div class="metric">
+      <h3>Ping (ms)</h3>
+      <div id="ping">–</div>
+    </div>
+    <div class="metric">
+      <h3>Reqs / Min</h3>
+      <div id="traffic">–</div>
+    </div>
+    <div class="metric">
+      <h3>Most Recent</h3>
+      <div id="recent">–</div>
+    </div>
+  </div>
+
+  <h2>Messages vs. System Messages</h2>
+  <div class="chart-container">
+    <canvas id="doughnutChart"></canvas>
+  </div>
+
+  <h2>Top 5 Active Users</h2>
+  <div class="chart-container">
+    <canvas id="usersChart"></canvas>
+  </div>
+
+  <h2>Top 20 Words</h2>
+  <table>
+    <thead>
+      <tr><th>Word</th><th>Count</th></tr>
+    </thead>
+    <tbody id="wordsTable"></tbody>
+  </table>
 
   <script>
-    const backend = 'https://chat-backend-pdzh.onrender.com';
+    const API = 'https://chat-backend-pdzh.onrender.com';
 
     async function loadStats() {
-      const [msgRes, recentRes, trafficRes, pingRes] = await Promise.all([
-        fetch(`${backend}/stats/messages`).then(r => r.json()),
-        fetch(`${backend}/stats/recent`).then(r => r.text()),
-        fetch(`${backend}/stats/traffic`).then(r => r.json()),
-        fetch(`${backend}/stats/ping`).then(r => r.json())
+      // Fetch everything in parallel
+      const [
+        log,
+        pingRes,
+        trafficRes,
+        recentText
+      ] = await Promise.all([
+        fetch(`${API}/log`).then(r => r.json()),
+        fetch(`${API}/stats/ping`).then(r => r.json()),
+        fetch(`${API}/stats/traffic`).then(r => r.json()),
+        fetch(`${API}/stats/recent`).then(r => r.text())
       ]);
 
-      document.getElementById('recent').innerText = recentRes;
-      document.getElementById('traffic').innerText = trafficRes.requestsPerMinute;
-      document.getElementById('ping').innerText = pingRes.ping;
+      // 1) Parse log for metrics
+      let totalMessages = 0, totalSystem = 0, totalLength = 0;
+      const userCounts = {};
+      const wordCounts = {};
+      const stopWords = new Set([
+        'the','and','to','of','a','in','is','it','you','for','on','that',
+        'this','with','i','be','are','as','have','was','but','not'
+      ]);
 
-      const labels = Object.keys(msgRes).reverse();
-      const data = Object.values(msgRes).reverse();
+      log.forEach(line => {
+        if (line.startsWith('<<') && line.endsWith('>>')) {
+          totalSystem++;
+        } else if (line.includes('>>')) {
+          totalMessages++;
+          const [rawUser, message] = line.split('>>');
+          const user = rawUser.trim();
+          userCounts[user] = (userCounts[user] || 0) + 1;
+          totalLength += message.length;
+          message
+            .toLowerCase()
+            .split(/\W+/)
+            .forEach(w => {
+              if (w && !stopWords.has(w)) {
+                wordCounts[w] = (wordCounts[w] || 0) + 1;
+              }
+            });
+        }
+      });
 
-      new Chart(document.getElementById('msgChart'), {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Messages',
-            data,
-            backgroundColor: 'steelblue'
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
+      const uniqueUsers = Object.keys(userCounts).length;
+      const avgLength   = totalMessages ? Math.round(totalLength / totalMessages) : 0;
+
+      // 2) Populate summary cards
+      document.getElementById('totalMessages').innerText = totalMessages;
+      document.getElementById('systemMessages').innerText = totalSystem;
+      document.getElementById('uniqueUsers').innerText   = uniqueUsers;
+      document.getElementById('avgLength').innerText     = avgLength + ' chars';
+      document.getElementById('ping').innerText          = pingRes.ping + ' ms';
+      document.getElementById('traffic').innerText       = trafficRes.requestsPerMinute;
+      document.getElementById('recent').innerText        = recentText || '–';
+
+      // 3) Doughnut chart: messages vs system
+      new Chart(
+        document.getElementById('doughnutChart').getContext('2d'),
+        {
+          type: 'doughnut',
+          data: {
+            labels: ['User Messages','System Messages'],
+            datasets: [{
+              data: [totalMessages, totalSystem],
+              backgroundColor: ['#4e73df','#e74a3b']
+            }]
+          },
+          options: { responsive: true, maintainAspectRatio: false }
+        }
+      );
+
+      // 4) Bar chart: top 5 users
+      const topUsers = Object.entries(userCounts)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0,5);
+      new Chart(
+        document.getElementById('usersChart').getContext('2d'),
+        {
+          type: 'bar',
+          data: {
+            labels: topUsers.map(u=>u[0]),
+            datasets: [{
+              label: 'Messages',
+              data: topUsers.map(u=>u[1]),
+              backgroundColor: '#1cc88a'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } }
           }
         }
+      );
+
+      // 5) Word frequency table: top 20
+      const topWords = Object.entries(wordCounts)
+        .sort((a,b) => b[1] - a[1])
+        .slice(0,20);
+      const tbody = document.getElementById('wordsTable');
+      tbody.innerHTML = '';
+      topWords.forEach(([word, count]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${word}</td><td>${count}</td>`;
+        tbody.appendChild(tr);
       });
     }
 
