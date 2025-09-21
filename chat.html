@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat</title>
+</head>
+<body>
+  <h2>Chat Room</h2>
+  <div id="chatBox" style="white-space: pre-wrap; border: 1px solid #ccc; height: 300px; overflow-y: scroll;"></div>
+  <input type="text" id="message" placeholder="Type your message">
+  <button onclick="sendMessage()">Send</button>
+
+  <script>
+    const user = localStorage.getItem('chatUser');
+    if (!user) window.location.href = 'index.html';
+
+    async function loadChat() {
+      const res = await fetch('https://chat-backend-production-1314.up.railway.app/log');
+      const log = await res.json();
+      document.getElementById('chatBox').innerText = log.join('\n');
+    }
+
+    async function sendMessage() {
+      const msg = document.getElementById('message').value;
+      const entry = `${user}>>${msg}`;
+      await fetch('https://chat-backend-production-1314.up.railway.app/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: entry })
+      });
+      document.getElementById('message').value = '';
+      loadChat();
+    }
+
+    setInterval(loadChat, 2000);
+    loadChat();
+  </script>
+</body>
+</html>
