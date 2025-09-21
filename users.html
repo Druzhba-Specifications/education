@@ -24,6 +24,7 @@
     .ranks { font-size: 0.9em; color: #555; margin-bottom: 8px; }
     .online { color: green; font-size: 0.85em; margin-bottom: 8px; }
     .offline { color: gray; font-size: 0.85em; margin-bottom: 8px; }
+    .banned { color: red; font-size: 0.85em; margin-bottom: 8px; }
     .admin-btn { margin-top: 6px; padding: 4px 8px; cursor: pointer; }
     #controls { margin-top: 30px; text-align: center; }
     #refresh { padding: 8px 16px; }
@@ -38,13 +39,32 @@
 
   <script>
     const API     = 'https://chat-backend-pdzh.onrender.com';
+    const user    = localStorage.getItem('chatUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
+    // If not logged in, kick to index
+    if (!user) {
+      return location.href = 'index.html';
+    }
+
+    // 1) Fetch /users first to see if *you* are banned
+    fetch(`${API}/users`)
+      .then(r => r.json())
+      .then(users => {
+        const me = users.find(u => u.username === user);
+        if (me && me.banned && user !== 'GOD HIMSELF') {
+          alert('You have been banned.');
+          return location.href = 'index.html';
+        }
+        // Otherwise proceed to load full listing
+        loadUsers();
+      });
+
+    // 2) loadUsers(): fetch users + ranks + render
     async function loadUsers() {
       const listEl = document.getElementById('userList');
       listEl.innerHTML = 'Loading…';
 
-      // fetch user data + ranks
       const [ users, ranks ] = await Promise.all([
         fetch(`${API}/users`).then(r => r.json()),
         fetch(`${API}/ranks.json`).then(r => r.json())
@@ -55,20 +75,20 @@
         const card = document.createElement('div');
         card.className = 'user-card';
 
-        // profile pic (local placeholder.png or remote asset)
+        // Avatar: local placeholder.png or remote asset
         const img = document.createElement('img');
         img.src = u.profilePic === 'placeholder.png'
           ? 'placeholder.png'
           : `${API}/assets/${u.profilePic}`;
         card.appendChild(img);
 
-        // username
+        // Username
         const nameDiv = document.createElement('div');
         nameDiv.className = 'username';
         nameDiv.innerText = u.username;
         card.appendChild(nameDiv);
 
-        // ranks (from /ranks.json)
+        // Ranks
         const userRanks = ranks[u.username] || [];
         const ranksDiv = document.createElement('div');
         ranksDiv.className = 'ranks';
@@ -77,20 +97,27 @@
           : 'Ranks: none';
         card.appendChild(ranksDiv);
 
-        // online/offline
+        // Online/Offline
         const statusDiv = document.createElement('div');
         statusDiv.className = u.online ? 'online' : 'offline';
         statusDiv.innerText = u.online ? 'Online' : 'Offline';
         card.appendChild(statusDiv);
 
-        // admin ban/unban
+        // Banned badge
+        if (u.banned) {
+          const banDiv = document.createElement('div');
+          banDiv.className = 'banned';
+          banDiv.innerText = 'BANNED';
+          card.appendChild(banDiv);
+        }
+
+        // Admin Ban/Unban buttons
         if (isAdmin) {
           const btn = document.createElement('button');
           btn.className = 'admin-btn';
           btn.innerText = u.banned ? 'Unban' : 'Ban';
           btn.onclick = async () => {
-            const action = u.banned ? 'unban' : 'ban';
-            await fetch(`${API}/${action}`, {
+            await fetch(`${API}/${u.banned ? 'unban' : 'ban'}`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ user: u.username })
@@ -105,7 +132,6 @@
     }
 
     document.getElementById('refresh').onclick = loadUsers;
-    loadUsers();
   </script>
 </body>
 </html>
