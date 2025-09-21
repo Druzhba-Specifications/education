@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>AlexNET Chat</title>
   <style>
-    /* theme variables */
+    /* ─── THEME VARIABLES ─────────────────────────────────────────────────── */
     :root {
       --sidebar-bg: #f5f5f5;
       --main-bg:    #ffffff;
@@ -13,6 +13,7 @@
       --font-size:  14px;
     }
 
+    /* ─── RESET & LAYOUT ───────────────────────────────────────────────────── */
     body {
       margin: 0;
       display: flex;
@@ -23,7 +24,7 @@
       font-size: var(--font-size);
     }
 
-    /* ─── SIDEBAR ───────────────────────────────────────────────────────── */
+    /* ─── SIDEBAR ───────────────────────────────────────────────────────────── */
     #sidebar {
       width: 200px;
       background: var(--sidebar-bg);
@@ -42,9 +43,7 @@
       position: relative;
       user-select: none;
     }
-    .channel.active {
-      background: #e0e0e0;
-    }
+    .channel.active { background: #e0e0e0; }
     .channel .unread-dot {
       position: absolute;
       top: 10px; right: 10px;
@@ -62,7 +61,7 @@
       user-select: none;
     }
 
-    /* ─── MAIN AREA ─────────────────────────────────────────────────────── */
+    /* ─── MAIN CHAT AREA ───────────────────────────────────────────────────── */
     #main {
       flex: 1;
       display: flex;
@@ -85,6 +84,9 @@
       white-space: pre-wrap;
       margin-bottom: 10px;
     }
+    .msg { margin: 4px 0; }
+    .msg.system { font-style: italic; color: gray; }
+
     #controls {
       display: flex;
       margin-bottom: 10px;
@@ -112,8 +114,6 @@
       display: none;
       margin-bottom: 10px;
     }
-    .msg { margin: 4px 0; }
-    .msg.system { font-style: italic; color: gray; }
 
     /* ─── SETTINGS MODAL ─────────────────────────────────────────────────── */
     #settingsModal {
@@ -148,6 +148,49 @@
     #settingsModal button {
       margin-left: 5px;
       padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    /* ─── WELCOME POPUP ───────────────────────────────────────────────────── */
+    #welcomeModal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    #welcomeModal .content {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 360px;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+    #welcomeModal .content img {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 15px;
+    }
+    #welcomeModal .content h3 {
+      margin: 0 0 10px;
+      font-size: 1.2em;
+    }
+    #welcomeModal .content p {
+      font-size: 0.95em;
+      margin-bottom: 20px;
+    }
+    #welcomeModal .content .close-btn {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: none;
+      border: none;
+      font-size: 1.2em;
+      cursor: pointer;
     }
 
     /* ─── ADMIN CONTROLS ─────────────────────────────────────────────────── */
@@ -161,9 +204,20 @@
   </style>
 </head>
 <body>
+
+  <!-- WELCOME POPUP -->
+  <div id="welcomeModal">
+    <div class="content">
+      <button class="close-btn" id="welcomeClose">&times;</button>
+      <img src="assets/placeholder.png" alt="Logo">
+      <h3>Welcome to AlexNET</h3>
+      <p>Your one-stop chat for everything. Have fun, be kind, and chat away!</p>
+    </div>
+  </div>
+
   <!-- SIDEBAR -->
   <div id="sidebar">
-    <!-- Channels injected via JS -->
+    <!-- Channels injected by JS -->
     <div id="settingsToggle">⚙️ Settings</div>
   </div>
 
@@ -227,33 +281,41 @@
 
   <script>
   (function(){
-    const API        = 'https://chat-backend-pdzh.onrender.com';
-    const user       = localStorage.getItem('chatUser');
-    const isAdmin    = localStorage.getItem('isAdmin')==='true';
+    const API     = 'https://chat-backend-pdzh.onrender.com';
+    const user    = localStorage.getItem('chatUser');
+    const isAdmin = localStorage.getItem('isAdmin')==='true';
     if(!user) return location.href='index.html';
+
+    // Show user & admin controls
     document.getElementById('username').innerText = user;
     if(isAdmin) document.getElementById('adminControls').style.display='block';
     document.getElementById('allUsersBtn').onclick = ()=> location.href='users.html';
 
-    // SETTINGS ELEMENTS
-    const optSidebar  = document.getElementById('optSidebarBg');
-    const optMain     = document.getElementById('optMainBg');
-    const optChat     = document.getElementById('optChatBg');
-    const optText     = document.getElementById('optTextColor');
-    const optSize     = document.getElementById('optFontSize');
-    const sizeVal     = document.getElementById('optFontSizeVal');
-    const modal       = document.getElementById('settingsModal');
-    const toggle      = document.getElementById('settingsToggle');
-    const applyBtn    = document.getElementById('applyBtn');
-    const closeBtn    = document.getElementById('closeBtn');
+    /* ─── WELCOME POPUP HANDLER ─────────────────────────────────────────── */
+    document.getElementById('welcomeClose').onclick = () => {
+      document.getElementById('welcomeModal').style.display = 'none';
+    };
+
+    /* ─── SETTINGS LOGIC ───────────────────────────────────────────────── */
+    const optSidebar = document.getElementById('optSidebarBg');
+    const optMain    = document.getElementById('optMainBg');
+    const optChat    = document.getElementById('optChatBg');
+    const optText    = document.getElementById('optTextColor');
+    const optSize    = document.getElementById('optFontSize');
+    const sizeVal    = document.getElementById('optFontSizeVal');
+    const modal      = document.getElementById('settingsModal');
+    const toggle     = document.getElementById('settingsToggle');
+    const applyBtn   = document.getElementById('applyBtn');
+    const closeBtn   = document.getElementById('closeBtn');
 
     function loadSettings(){
       const vars = getComputedStyle(document.documentElement);
-      const sBg = localStorage.getItem('optSidebarBg')   || vars.getPropertyValue('--sidebar-bg').trim();
-      const mBg = localStorage.getItem('optMainBg')      || vars.getPropertyValue('--main-bg').trim();
-      const cBg = localStorage.getItem('optChatBg')      || vars.getPropertyValue('--chat-bg').trim();
-      const tCol= localStorage.getItem('optTextColor')   || vars.getPropertyValue('--text-color').trim();
-      const fSz= localStorage.getItem('optFontSize')     || vars.getPropertyValue('--font-size').trim();
+      const sBg = localStorage.getItem('optSidebarBg')  || vars.getPropertyValue('--sidebar-bg').trim();
+      const mBg = localStorage.getItem('optMainBg')     || vars.getPropertyValue('--main-bg').trim();
+      const cBg = localStorage.getItem('optChatBg')     || vars.getPropertyValue('--chat-bg').trim();
+      const tCol= localStorage.getItem('optTextColor')  || vars.getPropertyValue('--text-color').trim();
+      const fSz = localStorage.getItem('optFontSize')   || vars.getPropertyValue('--font-size').trim();
+
       optSidebar.value = sBg;
       optMain.value    = mBg;
       optChat.value    = cBg;
@@ -268,32 +330,32 @@
       document.documentElement.style.setProperty('--font-size',  fSz);
     }
 
-    optSize.oninput = ()=> sizeVal.innerText = optSize.value+'px';
-    toggle.onclick  = ()=> modal.style.display='block';
-    closeBtn.onclick= ()=> modal.style.display='none';
+    optSize.oninput = ()=> sizeVal.innerText = optSize.value + 'px';
+    toggle.onclick  = ()=> modal.style.display = 'block';
+    closeBtn.onclick= ()=> modal.style.display = 'none';
 
-    applyBtn.onclick= ()=>{
+    applyBtn.onclick = () => {
       localStorage.setItem('optSidebarBg', optSidebar.value);
       localStorage.setItem('optMainBg',    optMain.value);
       localStorage.setItem('optChatBg',    optChat.value);
       localStorage.setItem('optTextColor', optText.value);
-      localStorage.setItem('optFontSize',  optSize.value+'px');
+      localStorage.setItem('optFontSize',  optSize.value + 'px');
       loadSettings();
     };
 
     loadSettings();
 
-    // CHANNEL LOGIC
-    let channels=[], current='public';
+    /* ─── CHANNEL LOGIC ──────────────────────────────────────────────────── */
+    let channels = [], current = 'public';
     const sidebar = document.getElementById('sidebar');
     const lastRead= JSON.parse(localStorage.getItem('lastRead')||'{}');
 
     async function loadChannels(){
       if(user==='GOD HIMSELF'){
         const all = await fetch(`${API}/users`).then(r=>r.json());
-        channels=['public', ...all.map(u=>u.username).filter(n=>n!=='GOD HIMSELF')];
+        channels = ['public', ...all.map(u=>u.username).filter(n=>n!=='GOD HIMSELF')];
       } else {
-        channels=['public','GOD HIMSELF'];
+        channels = ['public','GOD HIMSELF'];
       }
       renderChannels();
     }
@@ -301,29 +363,29 @@
     function renderChannels(){
       sidebar.querySelectorAll('.channel').forEach(e=>e.remove());
       channels.forEach(ch => {
-        const d = document.createElement('div');
-        d.className='channel';
-        d.innerText = ch==='public'?'Public Chat':ch;
-        if(ch===current) d.classList.add('active');
+        const el = document.createElement('div');
+        el.className = 'channel';
+        el.innerText = ch==='public'?'Public Chat':ch;
+        if(ch===current) el.classList.add('active');
 
         const dot = document.createElement('span');
-        dot.className='unread-dot';
-        d.appendChild(dot);
+        dot.className = 'unread-dot';
+        el.appendChild(dot);
 
-        d.onclick = ()=>{
-          current=ch;
+        el.onclick = () => {
+          current = ch;
           document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
-          d.classList.add('active');
-          dot.style.display='none';
-          lastRead[ch]=Date.now();
+          el.classList.add('active');
+          dot.style.display = 'none';
+          lastRead[ch] = Date.now();
           localStorage.setItem('lastRead', JSON.stringify(lastRead));
           loadChat();
         };
-        sidebar.insertBefore(d, toggle);
+        sidebar.insertBefore(el, toggle);
       });
     }
 
-    // EMOJI & MOJICON
+    /* ─── EMOJI & MOJICON ───────────────────────────────────────────────── */
     document.getElementById('emojiBtn').onclick   = toggleEmoji;
     document.getElementById('mojiconBtn').onclick = toggleMojicon;
 
@@ -333,9 +395,9 @@
       if(!b.hasChildNodes()){
         ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋']
         .forEach(e=>{
-          const s=document.createElement('span');
-          s.className='emoji'; s.innerText=e;
-          s.onclick=()=>{const i=document.getElementById('message');i.value+=e;i.focus();};
+          const s = document.createElement('span');
+          s.className = 'emoji'; s.innerText = e;
+          s.onclick = ()=>{const i=document.getElementById('message'); i.value+=e; i.focus();};
           b.appendChild(s);
         });
       }
@@ -348,38 +410,38 @@
         [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
          '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯']
         .forEach(f=>{
-          const s=document.createElement('span');
-          s.className='mojicon'; s.innerText=f;
-          s.onclick=()=>{const i=document.getElementById('message');i.value+=f;i.focus();};
+          const s = document.createElement('span');
+          s.className = 'mojicon'; s.innerText = f;
+          s.onclick=()=>{const i=document.getElementById('message'); i.value+=f; i.focus();};
           b.appendChild(s);
         });
       }
     }
 
-    // LOAD CHAT (public or PM)
+    /* ─── LOAD CHAT ─────────────────────────────────────────────────────── */
     async function loadChat(){
       const box = document.getElementById('chatBox');
       let data;
       if(current==='public'){
         data = await fetch(`${API}/log`).then(r=>r.json());
       } else {
-        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`).then(r=>r.json());
+        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
+                   .then(r=>r.json());
       }
 
-      const [ranks, banned, status] = await Promise.all([
+      const [ranks,banned,status] = await Promise.all([
         fetch(`${API}/ranks.json`).then(r=>r.json()),
         fetch(`${API}/blacklist.json`).then(r=>r.json()),
         fetch(`${API}/status`).then(r=>r.json())
       ]);
 
       if(status.off && user!=='GOD HIMSELF') return location.href='off.html';
-      if(banned.includes(user)){ alert('You are banned.'); return location.href='index.html'; }
+      if(banned.includes(user)){ alert('Banned'); return location.href='index.html'; }
 
       box.innerHTML='';
       let newest = lastRead[current]||0;
 
       data.forEach(item=>{
-        // public system messages
         if(current==='public' && typeof item==='string' && item.startsWith('<<')){
           box.innerHTML+=`<div class="msg system">${item}</div>`;
           return;
@@ -387,32 +449,31 @@
         let from,msg,ts;
         if(current==='public'){
           [from,msg]=item.split('>>');
-          ts=Date.now();
+          ts = Date.now();
         } else {
           from=item.from; msg=item.message; ts=item.ts;
         }
 
         const isNew = ts>(lastRead[current]||0);
-        if(isNew && from!==user && document.getElementById('optSound').checked){
+        if(isNew && from!==user && document.getElementById('optSound')?.checked){
           document.getElementById('notifAudio').play();
         }
         if(isNew && from!==user){
-          const chDiv = [...document.querySelectorAll('.channel')]
+          const ch = [...document.querySelectorAll('.channel')]
             .find(c=>c.innerText=== (current==='public'?'Public Chat':current));
-          if(chDiv) chDiv.querySelector('.unread-dot').style.display='block';
+          if(ch) ch.querySelector('.unread-dot').style.display='block';
         }
         if(ts>newest) newest=ts;
 
         let line;
         if(current==='public'){
           const sender=from.trim();
-          const userRanks=ranks[sender]||[];
-          const rHtml=userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
+          const uR=ranks[sender]||[];
+          const rHtml = uR.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
           line=`<strong>${rHtml} ${sender}</strong>: ${msg}`;
         } else {
           line=`<strong>${from}</strong>: ${msg}`;
         }
-
         if(document.getElementById('optTimestamp')?.checked){
           const t=new Date(ts).toLocaleTimeString();
           line=`[${t}] ${line}`;
@@ -426,15 +487,16 @@
       box.scrollTop=box.scrollHeight;
     }
 
-    // SEND MESSAGE
-    document.getElementById('sendBtn').onclick = sendMessage;
-    function sendMessage(){
-      const inp=document.getElementById('message'), txt=inp.value.trim();
+    /* ─── SEND MESSAGE ─────────────────────────────────────────────────── */
+    document.getElementById('sendBtn').onclick = () => {
+      const inp = document.getElementById('message');
+      const txt = inp.value.trim();
       if(!txt) return;
 
       if(current==='public'){
         if(isAdmin && txt.startsWith('/')){
-          const [cmd,target,...rest]=txt.split(' '), ep=cmd.slice(1);
+          const [cmd,target,...rest] = txt.split(' ');
+          const ep = cmd.slice(1);
           const body = ep==='warn'
             ? { user: target, reason: rest.join(' ') }
             : { user: target };
@@ -453,24 +515,24 @@
       } else {
         fetch(`${API}/pm`, {
           method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ from: user, to: current, message: txt })
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ from: user, to: current, message: txt })
         });
       }
 
       inp.value='';
       loadChat();
-    }
+    };
 
-    // ADMIN ACTIONS
-    document.getElementById('clearBtn').onclick   = ()=>{ fetch(`${API}/clear`,{method:'POST'}); loadChat(); };
-    document.getElementById('pauseBtn').onclick   = ()=>{ fetch(`${API}/pause`,{method:'POST'}); loadChat(); };
-    document.getElementById('unpauseBtn').onclick = ()=>{ fetch(`${API}/unpause`,{method:'POST'}); loadChat(); };
-    document.getElementById('offBtn').onclick     = ()=>{ fetch(`${API}/off`,{method:'POST'}); loadChat(); };
-    document.getElementById('onBtn').onclick      = ()=>{ fetch(`${API}/on`,{method:'POST'}); loadChat(); };
+    /* ─── ADMIN CONTROLS ───────────────────────────────────────────────── */
+    document.getElementById('clearBtn').onclick   = ()=> { fetch(`${API}/clear`,   {method:'POST'}); loadChat(); };
+    document.getElementById('pauseBtn').onclick   = ()=> { fetch(`${API}/pause`,   {method:'POST'}); loadChat(); };
+    document.getElementById('unpauseBtn').onclick = ()=> { fetch(`${API}/unpause`, {method:'POST'}); loadChat(); };
+    document.getElementById('offBtn').onclick     = ()=> { fetch(`${API}/off`,     {method:'POST'}); loadChat(); };
+    document.getElementById('onBtn').onclick      = ()=> { fetch(`${API}/on`,      {method:'POST'}); loadChat(); };
     document.getElementById('statsBtn').onclick   = ()=> window.open('stats.html','_blank');
 
-    // INITIALIZE EVERYTHING
+    /* ─── INITIALIZE ───────────────────────────────────────────────────── */
     loadChannels().then(()=>{
       loadChat();
       setInterval(loadChat, 2000);
@@ -479,3 +541,4 @@
   </script>
 </body>
 </html>
+```
