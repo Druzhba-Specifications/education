@@ -68,24 +68,32 @@
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
     async function loadChat() {
-      const logRes = await fetch(`${backend}/log`);
-      const log = await logRes.json();
-      const box = document.getElementById('chatBox');
-      box.innerText = log.join('\n');
-      box.scrollTop = box.scrollHeight;
+  const [logRes, ranksRes] = await Promise.all([
+    fetch(`${backend}/log`),
+    fetch(`${backend}/ranks.json`)
+  ]);
+  const log = await logRes.json();
+  const ranks = await ranksRes.json();
 
-      const status = await fetch(`${backend}/status`).then(r => r.json());
-      if (status.off && !isAdmin) location.href = 'off.html';
+  const box = document.getElementById('chatBox');
+  box.innerHTML = '';
 
-      const banned = await fetch(`${backend}/blacklist.json`).then(r => r.json());
-      if (banned.includes(user)) {
-        alert('You are banned.');
-        location.href = 'Loginscreen.html';
-      }
+  log.forEach(line => {
+    const [rawUser, message] = line.split('>>');
+    const user = rawUser.trim();
+    const userRanks = ranks[user] || [];
 
-      const warn = await fetch(`${backend}/warn/${encodeURIComponent(user)}`).then(r => r.json());
-      if (warn.reason) location.href = 'warn.html';
-    }
+    const rankSpan = userRanks.map(rank => {
+      const safeRank = rank.replace(/\s+/g, '-');
+      return `<span class="rank-${safeRank}">${rank}</span>`;
+    }).join(' ');
+
+    const lineHTML = `${rankSpan}-${user}>> ${message}`;
+    const span = document.createElement('span');
+    span.innerHTML = lineHTML;
+    box.appendChild(span);
+    box.appendChild(document.createElement('br'));
+  });
 
     async function sendMessage() {
       const msg = document.getElementById('message').value.trim();
