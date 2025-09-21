@@ -22,8 +22,9 @@
       const result = await res.json();
       if (result.success) {
         localStorage.setItem('chatUser', user);
-        if (result.redirect) return window.location.href = result.redirect;
-        window.location.href = result.isAdmin ? 'adminchat.html' : 'chat.html';
+        localStorage.setItem('isAdmin', result.isAdmin);
+        if (result.redirect) return location.href = result.redirect;
+        location.href = 'chat.html';
       } else {
         alert('Invalid login');
       }
