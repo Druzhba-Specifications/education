@@ -1,31 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Chat</title>
-</head>
+<head><title>Chat</title></head>
 <body>
-  <h2>Chat Room</h2>
-  <div id="chatBox" style="white-space: pre-wrap; border: 1px solid #ccc; height: 300px; overflow-y: scroll;"></div>
-  <input type="text" id="message" placeholder="Type your message">
-  <button onclick="sendMessage()">Send</button>
+  <h2>AlexNET AlexChat</h2>
+  <div id="chatBox" style="white-space:pre-wrap; border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
+  <input type="text" id="AChat Message Here...">
+  <button onclick="sendMessage()">Send AChat Message</button>
 
   <script>
     const user = localStorage.getItem('chatUser');
-    if (!user) window.location.href = 'index.html';
+    if (!user) location.href = 'index.html';
 
     async function loadChat() {
       const res = await fetch('https://chat-backend-pdzh.onrender.com/log');
       const log = await res.json();
-      document.getElementById('chatBox').innerText = log.join('\n');
+      const box = document.getElementById('chatBox');
+      box.innerText = log.join('\n');
+      box.scrollTop = box.scrollHeight;
     }
 
     async function sendMessage() {
       const msg = document.getElementById('message').value;
-      const entry = `${user}>>${msg}`;
       await fetch('https://chat-backend-pdzh.onrender.com/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: entry })
+        body: JSON.stringify({ user, message: msg })
       });
       document.getElementById('message').value = '';
       loadChat();
@@ -36,3 +35,4 @@
   </script>
 </body>
 </html>
+
