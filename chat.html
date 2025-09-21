@@ -83,7 +83,7 @@
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const backend = 'https://chat-backend-pdzh.onrender.com';
 
-    if (!user) location.href = 'Loginscreen.html';
+    if (!user) location.href = 'index.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
