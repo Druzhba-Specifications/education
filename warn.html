@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Warning</title>
+</head>
+<body>
+  <h2 id="reason"></h2>
+  <p id="message"></p>
+
+  <script>
+    const user = localStorage.getItem('chatUser');
+    fetch(`https://chat-backend-pdzh.onrender.com/warn/${user}`)
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById('reason').innerText = `⚠️ Warning: ${data.reason}`;
+        document.getElementById('message').innerText = data.message;
+        setTimeout(() => window.location.href = 'chat.html', 5000);
+      });
+  </script>
+</body>
+</html>
