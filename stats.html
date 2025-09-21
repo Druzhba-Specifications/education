@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AlexNET Statistics</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    canvas { max-width: 600px; }
+  </style>
+</head>
+<body>
+  <h2>📊 Chat Statistics</h2>
+  <p><strong>Most Recent Message:</strong> <span id="recent"></span></p>
+  <p><strong>Server Traffic:</strong> <span id="traffic"></span> requests/min</p>
+  <p><strong>Connection Strength:</strong> <span id="ping"></span> ms</p>
+
+  <h3>Messages Sent (Last 10 Days)</h3>
+  <canvas id="msgChart"></canvas>
+
+  <script>
+    const backend = 'https://chat-backend-pdzh.onrender.com';
+
+    async function loadStats() {
+      const [msgRes, recentRes, trafficRes, pingRes] = await Promise.all([
+        fetch(`${backend}/stats/messages`).then(r => r.json()),
+        fetch(`${backend}/stats/recent`).then(r => r.text()),
+        fetch(`${backend}/stats/traffic`).then(r => r.json()),
+        fetch(`${backend}/stats/ping`).then(r => r.json())
+      ]);
+
+      document.getElementById('recent').innerText = recentRes;
+      document.getElementById('traffic').innerText = trafficRes.requestsPerMinute;
+      document.getElementById('ping').innerText = pingRes.ping;
+
+      const labels = Object.keys(msgRes).reverse();
+      const data = Object.values(msgRes).reverse();
+
+      new Chart(document.getElementById('msgChart'), {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Messages',
+            data,
+            backgroundColor: 'steelblue'
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    loadStats();
+  </script>
+</body>
+</html>
