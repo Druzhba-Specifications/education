@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>All Users</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .user-list { display: flex; flex-wrap: wrap; gap: 20px; }
+    .user-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      width: 160px;
+      text-align: center;
+    }
+    .user-card img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: 8px;
+    }
+    .online { color: green; }
+    .offline { color: gray; }
+    .admin-btn { margin-top: 6px; padding: 4px 8px; cursor: pointer; }
+    #controls { margin-top: 30px; text-align: center; }
+    #refresh { padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>All Users</h1>
+  <div class="user-list" id="userList"></div>
+  <div id="controls">
+    <button id="refresh">Refresh</button>
+  </div>
+
+  <script>
+    const API = 'https://chat-backend-pdzh.onrender.com';
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    async function loadUsers() {
+      const listEl = document.getElementById('userList');
+      listEl.innerHTML = 'Loading…';
+
+      const users = await fetch(`${API}/users`).then(r => r.json());
+      listEl.innerHTML = '';
+
+      users.forEach(u => {
+        const card = document.createElement('div');
+        card.className = 'user-card';
+
+        // Avatar
+        const img = document.createElement('img');
+        img.src = `${API}/assets/${u.profilePic}`;
+        card.appendChild(img);
+
+        // Username
+        const name = document.createElement('div');
+        name.innerText = u.username;
+        card.appendChild(name);
+
+        // Online/Offline
+        const status = document.createElement('div');
+        status.innerText = u.online ? 'Online' : 'Offline';
+        status.className = u.online ? 'online' : 'offline';
+        card.appendChild(status);
+
+        // Admin Ban/Unban
+        if (isAdmin) {
+          const btn = document.createElement('button');
+          btn.className = 'admin-btn';
+          btn.innerText = u.banned ? 'Unban' : 'Ban';
+          btn.onclick = async () => {
+            const action = u.banned ? 'unban' : 'ban';
+            await fetch(`${API}/${action}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ user: u.username })
+            });
+            loadUsers();
+          };
+          card.appendChild(btn);
+        }
+
+        listEl.appendChild(card);
+      });
+    }
+
+    document.getElementById('refresh').onclick = loadUsers;
+    loadUsers();
+  </script>
+</body>
+</html>
