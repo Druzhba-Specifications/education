@@ -20,17 +20,28 @@
     }
     input#message { width: calc(100% - 110px); padding: 5px; }
     button { padding: 5px 10px; margin-left: 5px; cursor: pointer; }
-
+    .mojicon {
+      font-size: 20px;
+      cursor: pointer;
+      margin: 5px;
+      display: inline-block;
+    }
     .emoji {
       font-size: 20px;
       cursor: pointer;
       margin: 5px;
       display: inline-block;
     }
-
+    .rank-Egg { color: black; font-weight: bold; }
     .rank-Sigmer {
       font-weight: bold;
       background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .rank-Discorder {
+      font-weight: bold;
+      background: linear-gradient(to right,blue, darkblue,  indigo, #682860, violet);
       -webkit-background-clip: text;
       color: transparent;
     }
@@ -62,8 +73,10 @@
       <input type="text" id="message" placeholder="AChat Message">
       <button onclick="sendMessage()">Send</button>
       <button onclick="toggleEmojiBoard()">😀 Emoji Board</button>
+      <button onclick="toggleMojiconBoard()">(◐ω◑) Mojicon Board</button>
     </div>
     <div id="emojiBoard" style="display:none; margin-top:10px;"></div>
+    <div id="mojiconBoard" style="display:none; margin-top:10px;"></div>
 
     <div id="adminControls" style="margin-top:10px; display:none;">
       <button onclick="adminAction('clear')">Clear</button>
@@ -103,10 +116,28 @@
       const board = document.getElementById('emojiBoard');
       board.style.display = board.style.display === 'none' ? 'block' : 'none';
       if (!board.hasChildNodes()) {
-        const emojis = ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️'];
+        const emojis = ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️',' 🥚','☝️','🤓','🧏','🤫','👋'];
         emojis.forEach(e => {
           const span = document.createElement('span');
           span.className = 'emoji';
+          span.innerText = e;
+          span.onclick = () => {
+            const input = document.getElementById('message');
+            input.value += e;
+            input.focus();
+          };
+          board.appendChild(span);
+        });
+      }
+    }
+    function toggleMojiconBoard() {
+      const board = document.getElementById('mojiconBoard');
+      board.style.display = board.style.display === 'none' ? 'block' : 'none';
+      if (!board.hasChildNodes()) {
+        const mojicon = [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)','XD','(◐ω◑ )','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\_ (ツ)_/¯'];
+        mojicon.forEach(e => {
+          const span = document.createElement('span');
+          span.className = 'mojicon';
           span.innerText = e;
           span.onclick = () => {
             const input = document.getElementById('message');
