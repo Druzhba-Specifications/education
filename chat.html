@@ -200,7 +200,7 @@
 
       if (banned.includes(user)) {
         alert('You are banned.');
-        location.href = 'Loginscreen.html';
+        location.href = 'index.html';
       }
 
       const warn = await fetch(`${backend}/warn/${encodeURIComponent(user)}`).then(r => r.json());
