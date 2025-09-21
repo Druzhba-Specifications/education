@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-<head><title>AlexNET Education</title></head>
+<head><title>Chat Room</title></head>
 <body>
-  <h2>Welcome to AlexNET, <span id="username"></span>. Chat freely and say anything, anywhere!</h2>
+  <h2>Welcome, <span id="username"></span></h2>
   <div id="chatBox" style="white-space:pre-wrap; border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
   <input type="text" id="message" placeholder="Type a message">
   <button onclick="sendMessage()">Send</button>
@@ -18,20 +18,18 @@
   <script>
     const user = localStorage.getItem('chatUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!user) location.href = 'index.html';
+    if (!user) location.href = 'Loginscreen.html';
 
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
     async function loadChat() {
-      const res = await fetch('/log');
+      const res = await fetch('https://chat-backend-pdzh.onrender.com/log');
       const log = await res.json();
       const box = document.getElementById('chatBox');
       box.innerText = log.join('\n');
       box.scrollTop = box.scrollHeight;
 
-      const status = await fetch('/status').then(r => r.json());
+      const status = await fetch('https://chat-backend-pdzh.onrender.com/status').then(r => r.json());
       if (status.off && !isAdmin) location.href = 'off.html';
 
-      const banned = await fetch('/blacklist.json').then(r => r.json());
-      if (banned.includes
