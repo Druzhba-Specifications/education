@@ -14,7 +14,7 @@
     if (!user) window.location.href = 'index.html';
 
     async function loadChat() {
-      const res = await fetch('https://chat-backend-production-1314.up.railway.app/log');
+      const res = await fetch('https://chat-backend-pdzh.onrender.com/log');
       const log = await res.json();
       document.getElementById('chatBox').innerText = log.join('\n');
     }
@@ -22,7 +22,7 @@
     async function sendMessage() {
       const msg = document.getElementById('message').value;
       const entry = `${user}>>${msg}`;
-      await fetch('https://chat-backend-production-1314.up.railway.app/send', {
+      await fetch('https://chat-backend-pdzh.onrender.com/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: entry })
