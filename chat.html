@@ -99,6 +99,32 @@
     const user    = localStorage.getItem('chatUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
+    // … other functions …
+
+    async function loadChat() {
+      // 1) load logs, ranks, bans, status
+      const [logRes, ranksRes, banRes, statusRes] = await Promise.all([
+        fetch(`${backend}/log`).then(r=>r.json()),
+        fetch(`${backend}/ranks.json`).then(r=>r.json()),
+        fetch(`${backend}/blacklist.json`).then(r=>r.json()),
+        fetch(`${backend}/status`).then(r=>r.json())
+      ]);
+
+      // 2) check if warned
+      const warnText = await fetch(`${backend}/warn/${encodeURIComponent(user)}`)
+                           .then(r => r.text());
+      if (warnText) {
+        localStorage.setItem('warnMessage', warnText);
+        return location.href = 'warn.html';
+      }
+
+      // … rest of loadChat: handle off, bans, render chat & sidebar …
+    }
+
+    // … sendMessage, adminAction, adminCommand …
+
+    setInterval(loadChat, 2000);
+    v
     if (!user) location.href = 'index.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
