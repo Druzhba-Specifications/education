@@ -61,34 +61,3 @@
   </script>
 </body>
 </html>
-
-
-      if (!username || !password) return alert('Please enter both fields.');
-
-      const res = await fetch(`${backend}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const result = await res.json();
-
-      if (result.success) {
-        localStorage.setItem('chatUser', username);
-        localStorage.setItem('isAdmin', result.isAdmin);
-        if (result.redirect) return location.href = result.redirect;
-        location.href = 'chat.html';
-      } else {
-        alert('❌ Invalid username or password.');
-      }
-    }
-
-    // Optional: check if chat is off before login
-    setInterval(async () => {
-      const res = await fetch(`${backend}/status`);
-      const status = await res.json();
-      if (status.off) document.body.innerHTML = '<h2>🚧 Chat is currently offline</h2><p>Please try again later.</p>';
-    }, 5000);
-  </script>
-</body>
-</html>
