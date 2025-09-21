@@ -124,8 +124,3 @@
   </script>
 </body>
 </html>
-      box.scrollTop = box.scrollHeight;
-
-      const status = await fetch('https://chat-backend-pdzh.onrender.com/status').then(r => r.json());
-      if (status.off && !isAdmin) location.href = 'off.html';
-
