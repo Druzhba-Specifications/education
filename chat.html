@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Chat Room</title>
+  <title>AlexNET</title>
   <style>
     body { font-family: sans-serif; display: flex; gap: 20px; }
     #main { flex: 1; }
@@ -60,12 +60,12 @@
   <div id="main">
     <h2>Welcome, <span id="username"></span></h2>
     <div id="chatBox"></div>
-    <input type="text" id="message" placeholder="Type a message">
-    <button onclick="sendMessage()">Send</button>
+    <input type="text" id="message" placeholder="AChat Message>
 
     <div id="adminControls" style="margin-top:10px; display:none;">
       <button onclick="adminAction('clear')">Clear</button>
-      <button onclick="adminAction('pause')">Pause</button>
+      <button onclick="adminAction('pause')">Pause</button>">
+    <button onclick="sendMessage()">Send AlexChat Message</button
       <button onclick="adminAction('unpause')">Unpause</button>
       <button onclick="adminAction('off')">Off</button>
       <button onclick="adminAction('on')">On</button>
@@ -83,7 +83,7 @@
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
     const backend = 'https://chat-backend-pdzh.onrender.com';
 
-    if (!user) location.href = 'Loginscreen.html';
+    if (!user) location.href = 'index.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
