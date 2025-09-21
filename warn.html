@@ -1,21 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Warning</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 50px; }
+    #message { font-size: 1.2em; margin-bottom: 30px; }
+    #back { display: none; padding: 10px 20px; font-size: 1em; cursor: pointer; }
+  </style>
 </head>
 <body>
-  <h2 id="reason"></h2>
-  <p id="message"></p>
+  <div id="message"></div>
+  <button id="back">I understand, bring me back</button>
 
   <script>
-    const user = localStorage.getItem('chatUser');
-    fetch(`https://chat-backend-pdzh.onrender.com/warn/${user}`)
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById('reason').innerText = `⚠️ Warning: ${data.reason}`;
-        document.getElementById('message').innerText = data.message;
-        setTimeout(() => window.location.href = 'chat.html', 5000);
-      });
+    // map raw warn reasons to your two custom texts
+    const mapping = {
+      spam: 'You have been temporarily banned for spamming. If you don’t stop, you will be banned for longer or permabanned.',
+      innap: 'You have been temporarily banned for being inappropriate. If you continue to do this, you will either be permabanned or reported to Alex.'
+    };
+
+    // 1) Retrieve and clear the stored warn reason
+    const raw = localStorage.getItem('warnMessage') || '';
+    localStorage.removeItem('warnMessage');
+
+    // 2) Lowercase+trim to pick mapping
+    const key = raw.trim().toLowerCase();
+    const msg = mapping[key] || `You have been warned: ${raw}`;
+
+    document.getElementById('message').innerText = msg;
+
+    // 3) Reveal “bring me back” button after 7s
+    setTimeout(() => {
+      const btn = document.getElementById('back');
+      btn.style.display = 'inline-block';
+      btn.onclick = () => location.href = 'chat.html';
+    }, 7000);
   </script>
 </body>
-</html>
