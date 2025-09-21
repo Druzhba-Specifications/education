@@ -1,15 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head><title>Chat</title></head>
-<body>
-  <h2>AlexNET AlexChat</h2>
-  <div id="chatBox" style="white-space:pre-wrap; border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
-  <input type="text" id="AChat Message Here...">
-  <button onclick="sendMessage()">Send AChat Message</button>
-
+<head>
+  <title>Chat Room</title>
   <script>
     const user = localStorage.getItem('chatUser');
-    if (!user) location.href = 'index.html';
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    if (!user) location.href = 'Loginscreen.html';
+  </script>
+</head>
+<body>
+  <h2>Welcome, <span id="username"></span></h2>
+  <div id="chatBox" style="white-space:pre-wrap; border:1px solid #ccc; height:300px; overflow-y:scroll;"></div>
+  <input type="text" id="message" placeholder="Type a message">
+  <button onclick="sendMessage()">Send</button>
+
+  <div id="adminControls" style="margin-top:10px; display:none;">
+    <button onclick="adminAction('clear')">Clear</button>
+    <button onclick="adminAction('pause')">Pause</button>
+    <button onclick="adminAction('unpause')">Unpause</button>
+    <button onclick="adminAction('off')">Off</button>
+    <button onclick="adminAction('on')">On</button>
+  </div>
+
+  <script>
+    document.getElementById('username').innerText = user;
+    if (isAdmin) document.getElementById('adminControls').style.display = 'block';
 
     async function loadChat() {
       const res = await fetch('https://chat-backend-pdzh.onrender.com/log');
@@ -21,12 +36,32 @@
 
     async function sendMessage() {
       const msg = document.getElementById('message').value;
-      await fetch('https://chat-backend-pdzh.onrender.com/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, message: msg })
-      });
+
+      if (isAdmin && msg.startsWith('/')) {
+        const [cmd, arg, ...rest] = msg.split(' ');
+        const payload = { user: arg, reason: arg, message: rest.join(' ') };
+
+        if (cmd === '/ban') await fetch('/ban', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        else if (cmd === '/unban') await fetch('/unban', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        else if (cmd === '/warn') {
+          await fetch('/warn', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          return location.href = 'warn.html';
+        }
+        else if (cmd === '/del') await fetch('/del', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ line: parseInt(arg) }) });
+      } else {
+        await fetch('https://chat-backend-pdzh.onrender.com/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, message: msg })
+        });
+      }
+
       document.getElementById('message').value = '';
+      loadChat();
+    }
+
+    async function adminAction(action) {
+      await fetch(`https://chat-backend-pdzh.onrender.com/${action}`, { method: 'POST' });
       loadChat();
     }
 
@@ -35,4 +70,3 @@
   </script>
 </body>
 </html>
-
