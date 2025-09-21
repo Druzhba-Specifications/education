@@ -14,7 +14,7 @@
     async function login() {
       const user = document.getElementById('username').value;
       const pass = md5(document.getElementById('password').value);
-      const res = await fetch('https://chat-backend-production-1314.up.railway.app/login', {
+      const res = await fetch('https://chat-backend-pdzh.onrender.com/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, password: pass })
