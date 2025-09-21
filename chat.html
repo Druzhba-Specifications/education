@@ -10,6 +10,12 @@
       border-left: 1px solid #ccc;
       padding-left: 10px;
     }
+    #header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
     #chatBox {
       white-space: pre-wrap;
       border: 1px solid #ccc;
@@ -26,6 +32,7 @@
       margin: 5px;
       display: inline-block;
     }
+    /* rank styles… */
     .rank-Egg { color: black; font-weight: bold; }
     .rank-Sigmer {
       font-weight: bold;
@@ -65,7 +72,10 @@
 </head>
 <body>
   <div id="main">
-    <h2>Welcome, <span id="username"></span></h2>
+    <div id="header">
+      <h2>Welcome, <span id="username"></span></h2>
+      <button id="allUsersBtn">All Users</button>
+    </div>
 
     <div id="chatBox"></div>
 
@@ -99,32 +109,11 @@
     const user    = localStorage.getItem('chatUser');
     const isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    // … other functions …
+    // Redirect to All Users page
+    document.getElementById('allUsersBtn').onclick = () => {
+      location.href = 'users.html';
+    };
 
-    async function loadChat() {
-      // 1) load logs, ranks, bans, status
-      const [logRes, ranksRes, banRes, statusRes] = await Promise.all([
-        fetch(`${backend}/log`).then(r=>r.json()),
-        fetch(`${backend}/ranks.json`).then(r=>r.json()),
-        fetch(`${backend}/blacklist.json`).then(r=>r.json()),
-        fetch(`${backend}/status`).then(r=>r.json())
-      ]);
-
-      // 2) check if warned
-      const warnText = await fetch(`${backend}/warn/${encodeURIComponent(user)}`)
-                           .then(r => r.text());
-      if (warnText) {
-        localStorage.setItem('warnMessage', warnText);
-        return location.href = 'warn.html';
-      }
-
-      // … rest of loadChat: handle off, bans, render chat & sidebar …
-    }
-
-    // … sendMessage, adminAction, adminCommand …
-
-    setInterval(loadChat, 2000);
-    v
     if (!user) location.href = 'index.html';
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
@@ -181,14 +170,18 @@
         fetch(`${backend}/blacklist.json`).then(r => r.json()),
         fetch(`${backend}/status`).then(r => r.json())
       ]);
-      const log    = await logRes;
-      const ranks  = await ranksRes;
-      const banned = await bannedRes;
-      const status = await statusRes;
+
+      const log    = logRes;
+      const ranks  = ranksRes;
+      const banned = bannedRes;
+      const status = statusRes;
 
       // OFF mode & bans
       if (status.off && user !== 'GOD HIMSELF') return location.href = 'off.html';
-      if (banned.includes(user)) { alert('You are banned.'); return location.href = 'index.html'; }
+      if (banned.includes(user)) {
+        alert('You are banned.');
+        return location.href = 'index.html';
+      }
 
       const box      = document.getElementById('chatBox');
       const userList = document.getElementById('userList');
@@ -200,14 +193,14 @@
       log.forEach(line => {
         const span = document.createElement('span');
 
-        // 1) System messages (<<…>>)
         if (line.startsWith('<<') && line.endsWith('>>')) {
+          // system message
           span.innerText = line;
           span.style.color     = 'gray';
           span.style.fontStyle = 'italic';
         }
-        // 2) Normal chat (user>>message)
         else if (line.includes('>>')) {
+          // user message
           const [rawUser, message] = line.split('>>');
           const sender = rawUser.trim();
           seenUsers.add(sender);
@@ -217,9 +210,8 @@
             .map(r => `<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`)
             .join(' ');
 
-          span.innerHTML = `${rankSpan}-${sender}>> ${message}`;
+          span.innerHTML = `${rankSpan} ${sender}: ${message}`;
         }
-        // 3) Fallback
         else {
           span.innerText = line;
         }
@@ -228,7 +220,6 @@
         box.appendChild(document.createElement('br'));
       });
 
-      // Sidebar: only the real users
       seenUsers.forEach(name => {
         const entry = document.createElement('div');
         entry.className = 'userEntry';
@@ -264,7 +255,6 @@
         const payload = endpoint === 'warn'
           ? { user: target, reason: rest.join(' ') }
           : { user: target };
-
         await fetch(`${backend}/${endpoint}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -299,7 +289,6 @@
       loadChat();
     }
 
-    // refresh every 2s
     setInterval(loadChat, 2000);
     loadChat();
   </script>
