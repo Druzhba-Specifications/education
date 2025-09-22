@@ -1,114 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <title>AlexNET Chat</title>
+
+  <!-- Chart.js for analytics -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- CryptoJS for AES encryption -->
+  <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.1.1/crypto-js.min.js"></script>
+  <!-- Socket.io for typing indicators -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Jitsi Meet API -->
+  <script src="https://meet.jit.si/external_api.js"></script>
+
   <style>
     :root {
       --sidebar-bg: #f5f5f5;
-      --main-bg:    #fff;
+      --main-bg:    #ffffff;
       --chat-bg:    #fafafa;
-      --text-color: #000;
-      --font-size: 14px;
+      --text-color: #000000;
+      --font-size:  14px;
     }
     body {
-      margin: 0; display: flex; height: 100vh;
+      margin: 0;
+      display: flex;
+      height: 100vh;
       font-family: sans-serif;
       background: var(--main-bg);
       color: var(--text-color);
       font-size: var(--font-size);
     }
+
+    /* Sidebar */
     #sidebar {
-      width: 200px; background: var(--sidebar-bg);
+      width: 200px;
+      background: var(--sidebar-bg);
       border-right: 1px solid #ccc;
-      display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .rank-Egg { color: black; font-weight: bold; } 
+    .rank-Sigmer { 
+      font-weight: bold; 
+      background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); 
+      -webkit-background-clip: text; 
+      color: transparent; 
+    } 
+    .rank-Discorder { 
+      font-weight: bold; 
+      background: linear-gradient(to right, blue, darkblue, indigo, #682860, violet); 
+      -webkit-background-clip: text; 
+      color: transparent; 
+    } 
+    .rank-BEAN { font-weight: bold; background: linear-gradient(to right, black, #B7410E, brown, orange, yellow); -webkit-background-clip: text; color: transparent; } 
+    .rank-OG { color: gold; font-weight: bold; } 
+    .rank-Bloody { color: darkred; font-weight: bold; } 
+    .rank-ADMIN { 
+      font-weight: bold; 
+      background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet); background-size: 400% 400%; 
+      -webkit-background-clip: text; 
+      color: transparent; 
+      animation: rainbowMove 5s infinite linear; 
+    } 
+    @keyframes rainbowMove { 
+      0% { background-position: 0% 50%; } 
+      100% { background-position: 100% 50%; }
+      0% { background-position: 0% 50%; }
     }
     .channel {
-      padding: 8px; margin-bottom: 6px;
-      cursor: pointer; border-radius: 4px;
-      position: relative; user-select: none;
+      padding: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      position: relative;
+      user-select: none;
     }
     .channel.active { background: #e0e0e0; }
-    .channel .unread-dot {
-      position: absolute; top: 8px; right: 8px;
+    .unread-dot {
+      position: absolute;
+      top: 8px; right: 8px;
       width: 8px; height: 8px;
       background: red; border-radius: 50%;
       display: none;
     }
-    #settingsToggle {
-      margin-top: auto; text-align: center;
-      padding: 8px; cursor: pointer;
+    #settingsToggle, #analyticsToggle {
+      margin-top: auto;
+      text-align: center;
+      cursor: pointer;
+      padding: 8px;
       border-top: 1px solid #ccc;
     }
 
+    /* Main */
     #main {
-      flex: 1; display: flex; flex-direction: column;
-      padding: 20px; box-sizing: border-box;
+      flex: 1;
+      padding: 20px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
     #header {
-      display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #header button {
+      margin-left: 8px;
+    }
+    #storiesBar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      overflow-x: auto;
+    }
+    #storiesBar img {
+      width: 50px; height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
     }
     #chatBox {
-      flex: 1; background: var(--chat-bg);
-      border: 1px solid #ccc; padding: 10px;
-      overflow-y: auto; white-space: pre-wrap;
+      flex: 1;
+      background: var(--chat-bg);
+      border: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+      white-space: pre-wrap;
       margin-bottom: 10px;
     }
     .msg { margin: 4px 0; }
     .msg.system { font-style: italic; color: gray; }
 
+    #typingIndicator {
+      height: 20px;
+      font-size: 0.9em;
+      color: #555;
+    }
+
     #controls {
-      display: flex; margin-bottom: 10px;
+      display: flex;
+      margin-bottom: 10px;
     }
     #message {
-      flex: 1; padding: 8px; border: 1px solid #ccc;
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
     }
-    button { margin-left: 5px; padding: 8px 12px; }
+    #controls button {
+      margin-left: 5px;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
 
-    .emoji, .mojicon {
-      font-size: 24px; cursor: pointer;
-      display: inline-block; margin: 5px;
-    }
     #emojiBoard, #mojiconBoard {
-      display: none; margin-bottom: 10px;
+      display: none;
+      margin-bottom: 10px;
+    }
+    .emoji, .mojicon {
+      font-size: 24px;
+      cursor: pointer;
+      margin: 5px;
+      display: inline-block;
     }
 
+    /* Settings Modal */
     #settingsModal {
-      position: fixed; top: 50%; left: 50%;
+      position: fixed;
+      top: 50%; left: 50%;
       transform: translate(-50%,-50%);
-      background: white; border: 1px solid #ccc;
-      padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-      display: none; z-index: 1000; width: 300px;
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1000;
+      width: 300px;
       box-sizing: border-box;
     }
     #settingsModal h3 { margin-top: 0; }
     #settingsModal label {
-      display: block; margin: 10px 0; cursor: pointer;
+      display: block;
+      margin: 10px 0;
+      cursor: pointer;
     }
-    #settingsModal input { margin-left: 8px; }
+    #settingsModal input, #settingsModal select {
+      margin-left: 8px;
+      vertical-align: middle;
+    }
 
+    /* Analytics Modal */
+    #analyticsModal {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      background: white;
+      border: 1px solid #ccc;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 1000;
+      width: 400px;
+      height: 300px;
+      box-sizing: border-box;
+    }
+    #analyticsModal canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Welcome Popup */
     #welcomeModal {
-      position: fixed; top: 0; left: 0; width: 100%;
-      height: 100%; background: rgba(0,0,0,0.5);
-      display: flex; align-items: center;
-      justify-content: center; z-index: 2000;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
     }
     #welcomeModal .content {
-      background: #fff; padding: 20px; text-align: center;
-      border-radius: 8px; position: relative;
+      background: white;
+      padding: 20px;
+      text-align: center;
+      border-radius: 8px;
+      position: relative;
       box-shadow: 0 2px 12px rgba(0,0,0,0.3);
       max-width: 360px;
     }
     #welcomeModal .close-btn {
       position: absolute; top: 8px; right: 8px;
-      background: none; border: none; font-size: 1.2em;
-      cursor: pointer;
+      background: none; border: none;
+      font-size: 1.2em; cursor: pointer;
     }
 
-    #adminControls { margin-top: 10px; display: none; }
-    #adminControls button { margin-right: 5px; }
+    /* Jitsi container */
+    #jitsiContainer {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.7);
+      display: none; z-index: 3000;
+    }
   </style>
 </head>
 <body>
@@ -118,32 +252,48 @@
       <button class="close-btn" id="welcomeClose">&times;</button>
       <img src="assets/placeholder.png" width="80" height="80" alt="Logo">
       <h3>Welcome to AlexNET</h3>
-      <p>Have fun, be kind, and chat away!</p>
+      <p>Explore threads, reactions, pins, search, DMs, calls & more!</p>
     </div>
   </div>
 
   <!-- Sidebar -->
   <div id="sidebar">
-    <!-- channels injected here -->
+    <!-- Channels inserted here -->
     <div id="settingsToggle">⚙️ Settings</div>
+    <div id="analyticsToggle">📊 Analytics</div>
   </div>
 
-  <!-- Main -->
+  <!-- Main Area -->
   <div id="main">
     <div id="header">
-      <h2>Hello, <span id="username"></span></h2>
-      <button id="allUsersBtn">All Users</button>
+      <div>
+        <h2>Hello, <span id="username"></span></h2>
+      </div>
+      <div>
+        <button id="allUsersBtn">All Users</button>
+        <button id="callBtn">Join Call</button>
+      </div>
     </div>
+
+    <!-- Stories -->
+    <div id="storiesBar"></div>
+
+    <!-- Chat Box -->
     <div id="chatBox"></div>
+    <div id="typingIndicator"></div>
+
+    <!-- Controls -->
     <div id="controls">
-      <input id="message" placeholder="Type a message…" />
+      <input type="text" id="message" placeholder="Type a message…" />
       <button id="sendBtn">Send</button>
       <button id="emojiBtn">😀</button>
       <button id="mojiconBtn">(◐ω◑)</button>
     </div>
     <div id="emojiBoard"></div>
     <div id="mojiconBoard"></div>
-    <div id="adminControls">
+
+    <!-- Admin Controls -->
+    <div id="adminControls" style="display:none; margin-top:10px;">
       <button id="clearBtn">Clear</button>
       <button id="pauseBtn">Pause</button>
       <button id="unpauseBtn">Unpause</button>
@@ -155,21 +305,33 @@
 
   <!-- Settings Modal -->
   <div id="settingsModal">
-    <h3>Customize Chat</h3>
-    <label><input type="checkbox" id="optSound" /> Play sound on new messages</label>
-    <label><input type="checkbox" id="optTimestamp" /> Show timestamps</label>
-    <label>Sidebar BG:<input type="color" id="optSidebarBg" value="#f5f5f5"></label>
-    <label>Main BG:<input type="color" id="optMainBg" value="#ffffff"></label>
-    <label>Chat BG:<input type="color" id="optChatBg" value="#fafafa"></label>
-    <label>Text Color:<input type="color" id="optTextColor" value="#000000"></label>
-    <label>Font Size:<input type="range" id="optFontSize" min="12" max="24" value="14">
-      <span id="optFontSizeVal">14px</span>
+    <h3>Settings</h3>
+    <label><input type="checkbox" id="optSound"> Play sound on new messages</label>
+    <label><input type="checkbox" id="optTimestamp"> Show timestamps</label>
+    <label>Keyword alerts:<input type="text" id="optKeywords" placeholder="Comma-separated"></label>
+    <label>Status:
+      <select id="optStatus">
+        <option value="online">Online</option>
+        <option value="away">Away</option>
+        <option value="dnd">Do Not Disturb</option>
+      </select>
+      <input type="text" id="optStatusText" placeholder="Custom status">
     </label>
-    <div style="text-align:right; margin-top:15px;">
+    <label>Upload Story:<input type="file" id="optStoryFile"></label>
+    <div style="text-align:right; margin-top:10px;">
       <button id="applyBtn">Apply</button>
       <button id="closeBtn">Close</button>
     </div>
   </div>
+
+  <!-- Analytics Modal -->
+  <div id="analyticsModal">
+    <button class="close-btn" id="analyticsClose">&times;</button>
+    <canvas id="analyticsCanvas"></canvas>
+  </div>
+
+  <!-- Jitsi Container -->
+  <div id="jitsiContainer"></div>
 
   <!-- Notification Sound -->
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
@@ -181,210 +343,343 @@
     const isAdmin = localStorage.getItem('isAdmin')==='true';
     if(!user) return location.href='index.html';
 
+    // Socket.io for typing & online
+    const socket = io({ query:{ user }});
+    socket.on('typing', data => {
+      if(data.user !== user && data.channel===current) {
+        document.getElementById('typingIndicator').innerText = data.user + ' is typing…';
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(()=>document.getElementById('typingIndicator').innerText='', 1500);
+      }
+    });
+
     // Elements
-    const sidebar    = document.getElementById('sidebar');
-    const toggle     = document.getElementById('settingsToggle');
-    const modal      = document.getElementById('settingsModal');
-    const applyBtn   = document.getElementById('applyBtn');
-    const closeBtn   = document.getElementById('closeBtn');
-    const notifAudio = document.getElementById('notifAudio');
-
+    const sidebar      = document.getElementById('sidebar');
+    const chatBox      = document.getElementById('chatBox');
+    const msgInp       = document.getElementById('message');
+    const sendBtn      = document.getElementById('sendBtn');
+    const emojiBtn     = document.getElementById('emojiBtn');
+    const mojBtn       = document.getElementById('mojiconBtn');
+    const notif        = document.getElementById('notifAudio');
     const optSound     = document.getElementById('optSound');
-    const optTimestamp = document.getElementById('optTimestamp');
-    const optSidebarBg = document.getElementById('optSidebarBg');
-    const optMainBg    = document.getElementById('optMainBg');
-    const optChatBg    = document.getElementById('optChatBg');
-    const optTextColor = document.getElementById('optTextColor');
-    const optFontSize  = document.getElementById('optFontSize');
-    const sizeVal      = document.getElementById('optFontSizeVal');
-
+    const optTs        = document.getElementById('optTimestamp');
+    const optKw        = document.getElementById('optKeywords');
+    const optStatus    = document.getElementById('optStatus');
+    const optStatusTxt = document.getElementById('optStatusText');
+    const optStoryFile = document.getElementById('optStoryFile');
+    const storiesBar   = document.getElementById('storiesBar');
+    const settings     = document.getElementById('settingsModal');
+    const sToggle      = document.getElementById('settingsToggle');
+    const sClose       = document.getElementById('closeBtn');
+    const applyBtn     = document.getElementById('applyBtn');
+    const analytics    = document.getElementById('analyticsModal');
+    const aToggle      = document.getElementById('analyticsToggle');
+    const aClose       = document.getElementById('analyticsClose');
+    const ctx          = document.getElementById('analyticsCanvas').getContext('2d');
+    const callBtn      = document.getElementById('callBtn');
+    const jitsiDiv     = document.getElementById('jitsiContainer');
     const welcomeModal = document.getElementById('welcomeModal');
     const welcomeClose = document.getElementById('welcomeClose');
 
-    // Show user & admin
     document.getElementById('username').innerText = user;
-    if(isAdmin) document.getElementById('adminControls').style.display='block';
     document.getElementById('allUsersBtn').onclick = ()=>location.href='users.html';
+    if(isAdmin) document.getElementById('adminControls').style.display='block';
 
     // Welcome popup
-    welcomeClose.onclick = ()=>welcomeModal.style.display='none';
+    welcomeClose.onclick = ()=> welcomeModal.style.display='none';
 
-    // Load/Save Settings
+    // Load settings
     function loadSettings(){
-      const vars=getComputedStyle(document.documentElement);
-      const sBg = localStorage.getItem('optSidebarBg')||vars.getPropertyValue('--sidebar-bg').trim();
-      const mBg = localStorage.getItem('optMainBg')   ||vars.getPropertyValue('--main-bg').trim();
-      const cBg = localStorage.getItem('optChatBg')   ||vars.getPropertyValue('--chat-bg').trim();
-      const tCol= localStorage.getItem('optTextColor')||vars.getPropertyValue('--text-color').trim();
-      const fSz = localStorage.getItem('optFontSize') ||vars.getPropertyValue('--font-size').trim();
-      const snd = localStorage.getItem('optSound')==='true';
-      const ts  = localStorage.getItem('optTimestamp')==='true';
-
-      optSidebarBg.value = sBg; document.documentElement.style.setProperty('--sidebar-bg',sBg);
-      optMainBg.value    = mBg; document.documentElement.style.setProperty('--main-bg',mBg);
-      optChatBg.value    = cBg; document.documentElement.style.setProperty('--chat-bg',cBg);
-      optTextColor.value = tCol; document.documentElement.style.setProperty('--text-color',tCol);
-      optFontSize.value  = parseInt(fSz); sizeVal.innerText = fSz;
-      document.documentElement.style.setProperty('--font-size',fSz);
-
-      optSound.checked     = snd;
-      optTimestamp.checked = ts;
+      optSound.checked     = localStorage.getItem('optSound')==='true';
+      optTs.checked        = localStorage.getItem('optTimestamp')==='true';
+      optKw.value          = localStorage.getItem('optKeywords')||'';
+      const st             = JSON.parse(localStorage.getItem('optStatus')||'{"code":"online","text":""}');
+      optStatus.value      = st.code;
+      optStatusTxt.value   = st.text;
     }
-    function saveSettings(){
-      localStorage.setItem('optSidebarBg',optSidebarBg.value);
-      localStorage.setItem('optMainBg',optMainBg.value);
-      localStorage.setItem('optChatBg',optChatBg.value);
-      localStorage.setItem('optTextColor',optTextColor.value);
-      localStorage.setItem('optFontSize',optFontSize.value+'px');
-      localStorage.setItem('optSound',optSound.checked);
-      localStorage.setItem('optTimestamp',optTimestamp.checked);
-      loadSettings();
-    }
-    toggle.onclick   = ()=>modal.style.display='block';
-    closeBtn.onclick = ()=>modal.style.display='none';
-    applyBtn.onclick = saveSettings;
-    optFontSize.oninput = ()=> sizeVal.innerText = optFontSize.value+'px';
     loadSettings();
 
-    // Channels
-    let channels = [], current='public';
+    // Save settings
+    function saveSettings(){
+      localStorage.setItem('optSound', optSound.checked);
+      localStorage.setItem('optTimestamp', optTs.checked);
+      localStorage.setItem('optKeywords', optKw.value);
+      localStorage.setItem('optStatus', JSON.stringify({
+        code: optStatus.value,
+        text: optStatusTxt.value
+      }));
+      fetch(`${API}/setstatus`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ user, code:optStatus.value, text:optStatusTxt.value })
+      });
+    }
+
+    sToggle.onclick = ()=> settings.style.display='block';
+    sClose.onclick  = ()=> settings.style.display='none';
+    applyBtn.onclick= ()=>{ saveSettings(); settings.style.display='none'; };
+
+    // Analytics
+    aToggle.onclick = async()=>{
+      analytics.style.display='block';
+      const data = await fetch(`${API}/stats/messages`).then(r=>r.json());
+      new Chart(ctx, {
+        type:'line',
+        data:{
+          labels:Object.keys(data),
+          datasets:[{ label:'Messages/day', data:Object.values(data) }]
+        }
+      });
+    };
+    aClose.onclick = ()=> analytics.style.display='none';
+
+    // Group call
+    callBtn.onclick = () => {
+      jitsiDiv.style.display='block';
+      new JitsiMeetExternalAPI('meet.jit.si', {
+        roomName: 'AlexNET-'+Date.now(),
+        parentNode: jitsiDiv,
+        width:'100%', height:'100%'
+      });
+    };
+
+    // Channel logic
+    let channels = [], current = 'public';
     const lastRead = JSON.parse(localStorage.getItem('lastRead')||'{}');
+
     async function loadChannels(){
-      if(user==='GOD HIMSELF'){
-        const all=await fetch(`${API}/users`).then(r=>r.json());
-        channels=['public', ...all.map(u=>u.username).filter(n=>n!=='GOD HIMSELF')];
-      }else{
-        channels=['public','GOD HIMSELF'];
-      }
+      const users = await fetch(`${API}/users`).then(r=>r.json());
+      channels = ['public', ...users.map(u=>u.username).filter(u=>u!==user)];
       renderChannels();
     }
     function renderChannels(){
       sidebar.querySelectorAll('.channel').forEach(e=>e.remove());
       channels.forEach(ch=>{
-        const el=document.createElement('div');
-        el.className='channel';
-        el.dataset.ch=ch;
-        el.innerText=ch==='public'?'Public Chat':ch;
+        const el = document.createElement('div');
+        el.className = 'channel';
+        el.dataset.ch = ch;
+        el.innerText = ch==='public'? 'Public Chat': ch;
         if(ch===current) el.classList.add('active');
-        const dot=document.createElement('span');
+        const dot = document.createElement('span');
         dot.className='unread-dot';
         el.appendChild(dot);
-        el.onclick=()=>{
-          current=ch;
+        el.onclick = ()=>{
+          current = ch;
           document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
           el.classList.add('active');
           dot.style.display='none';
-          lastRead[ch]=Date.now();
-          localStorage.setItem('lastRead',JSON.stringify(lastRead));
+          lastRead[ch] = Date.now();
+          localStorage.setItem('lastRead', JSON.stringify(lastRead));
           loadChat();
         };
-        sidebar.insertBefore(el,toggle);
+        sidebar.insertBefore(el, aToggle);
       });
     }
 
-    // Emoji/Mojicon
-    document.getElementById('emojiBtn').onclick = ()=> toggleBoard('emojiBoard','emoji');
-    document.getElementById('mojiconBtn').onclick = ()=> toggleBoard('mojiconBoard','mojicon');
-    function toggleBoard(id,cls){
-      const b=document.getElementById(id);
-      b.style.display=b.style.display==='block'?'none':'block';
-      if(!b.hasChildNodes()){
-        const list=cls==='emoji'
-          ? ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋']
-          : [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
-             '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯'];
-        list.forEach(sym=>{
-          const s=document.createElement('span');
-          s.className=cls; s.innerText=sym;
-          s.onclick=()=>{const i=document.getElementById('message');i.value+=sym;i.focus();};
-          b.appendChild(s);
-        });
-      }
+    // Load stories
+    async function loadStories(){
+      storiesBar.innerHTML='';
+      const list = await fetch(`${API}/stories.json`).then(r=>r.json());
+      list.forEach(s=>{
+        const img = document.createElement('img');
+        img.src = s.url;
+        img.title = s.user;
+        storiesBar.appendChild(img);
+      });
     }
+    optStoryFile.onchange = async()=>{
+      const file = optStoryFile.files[0];
+      if(!file) return;
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('user', user);
+      await fetch(`${API}/story`, { method:'POST', body:fd });
+      loadStories();
+    };
 
-    // Load Chat
+    // Chat loading
+    let typingTimeout;
     async function loadChat(){
-      const box=document.getElementById('chatBox');
-      let data;
-      if(current==='public'){
-        data=await fetch(`${API}/log`).then(r=>r.json());
-      } else {
-        data=await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
-                 .then(r=>r.json());
-      }
-      const [ranks,banned,status]=await Promise.all([
+      const raw = current==='public'
+        ? await fetch(`${API}/log`).then(r=>r.json())
+        : await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
+            .then(r=>r.json());
+
+      const [ranks, reacts, pins, receipts, alerts] = await Promise.all([
         fetch(`${API}/ranks.json`).then(r=>r.json()),
-        fetch(`${API}/blacklist.json`).then(r=>r.json()),
-        fetch(`${API}/status.json`).then(r=>r.json())
+        fetch(`${API}/reactions.json`).then(r=>r.json()),
+        fetch(`${API}/pins.json`).then(r=>r.json()),
+        fetch(`${API}/receipts.json`).then(r=>r.json()),
+        fetch(`${API}/alerts.json`).then(r=>r.json())
       ]);
-      if(status.off&&user!=='GOD HIMSELF') return location.href='off.html';
-      if(banned.includes(user)) return location.href='index.html';
-      box.innerHTML='';
-      let newest=lastRead[current]||0;
-      data.forEach(line=>{
-        if(current==='public' && typeof line==='string' && line.startsWith('<<')){
-          box.innerHTML+='<div class="msg system">'+line+'</div>';
-          return;
-        }
-        let from,msg,ts;
-        if(current==='public'){
-          [from,msg]=line.split('>>');
-          ts=Date.now();
+
+      chatBox.innerHTML = '';
+      let newest = lastRead[current]||0;
+
+      raw.forEach((item, idx) => {
+        let from, msg, ts = Date.now(), parentId = null;
+        if(current==='public') {
+          if(typeof item==='string' && item.startsWith('<<')) {
+            chatBox.innerHTML += `<div class="msg system">${item}</div>`;
+            return;
+          }
+          const parts = item.split('>>');
+          from = parts[0].trim();
+          msg  = parts[1];
+          if(parts[2]) parentId = parseInt(parts[2],10);
         } else {
-          from=line.from; msg=line.message; ts=line.ts;
+          from = item.from; msg = item.message; ts = item.ts;
         }
-        const isNew=ts> (lastRead[current]||0);
-        if(isNew && from!==user && optSound.checked) notifAudio.play();
-        if(isNew && from!==user){
-          const chEl=document.querySelector(`.channel[data-ch="${current}"]`);
+        const isNew = ts > (lastRead[current]||0);
+        if(isNew && from!==user && optSound.checked) notif.play();
+        if(isNew && from!==user) {
+          const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
           if(chEl) chEl.querySelector('.unread-dot').style.display='block';
         }
-        if(ts>newest) newest=ts;
-        const sender=from.trim();
-        const userRanks=ranks[sender]||[];
-        const rankHtml=userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
-        let lineHtml=current==='public'
-          ? `<strong>${rankHtml} ${sender}</strong>: ${msg}`
-          : `<strong>${sender}</strong>: ${msg}`;
-        if(optTimestamp.checked){
-          lineHtml=`[${new Date(ts).toLocaleTimeString()}] ${lineHtml}`;
+        if(ts>newest) newest = ts;
+
+        // indent replies
+        const indent = parentId!==null ? 'margin-left:20px;' : '';
+
+        // encryption
+        if(msg.startsWith('/encrypt ')) {
+          const pass = prompt('Passphrase?');
+          msg = '$AES$' +
+            CryptoJS.AES.encrypt(msg.slice(9), pass).toString();
         }
-        box.innerHTML+=`<div class="msg">${lineHtml}</div>`;
+        if(msg.startsWith('$AES$')) {
+          const pass = prompt('Passphrase?');
+          const bytes= CryptoJS.AES.decrypt(msg.slice(5), pass);
+          msg = bytes.toString(CryptoJS.enc.Utf8) || '[decrypt error]';
+        }
+
+        let html = `<div class="msg" style="${indent}">`;
+        if(optTs.checked) {
+          html += `[${new Date(ts).toLocaleTimeString()}] `;
+        }
+        // ranks
+        const rHtml = (ranks[from]||[])
+          .map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`)
+          .join(' ');
+        html += `<strong>${rHtml} ${from}</strong>: ${msg}`;
+
+        // reactions
+        const R = reacts[idx]||{};
+        Object.entries(R).forEach(([e,uArr]) => {
+          html += ` <span onclick="react(${idx},'${e}')" style="cursor:pointer">${e}(${uArr.length})</span>`;
+        });
+        html += ` <span onclick="openEmoji(${idx})" style="cursor:pointer">+</span>`;
+
+        // pin
+        if(pins.includes(idx)) html += ' <span>📌</span>';
+        html += ` <span onclick="pin(${idx})" style="cursor:pointer">📌</span>`;
+
+        // edit/delete
+        if(from===user) {
+          html += ` <span onclick="edit(${idx})" style="cursor:pointer">✏️</span>`;
+          html += ` <span onclick="del(${idx})" style="cursor:pointer">🗑️</span>`;
+        }
+
+        // reply
+        html += ` <span onclick="reply(${idx})" style="cursor:pointer">↩️</span>`;
+
+        // receipts
+        const recArr = receipts[idx]||[];
+        if(recArr.length) html += ` <span style="font-size:0.8em;color:#555">✓${recArr.length}</span>`;
+
+        // keyword alert highlight
+        const kws = optKw.value.split(',').map(s=>s.trim()).filter(s=>s);
+        if(kws.some(k=>msg.includes(k))) {
+          html = `<div class="msg" style="background:yellow;${indent}">` + html.split('">')[1];
+        }
+
+        html += '</div>';
+        chatBox.innerHTML += html;
       });
-      lastRead[current]=newest;
-      localStorage.setItem('lastRead',JSON.stringify(lastRead));
-      box.scrollTop=box.scrollHeight;
+
+      lastRead[current] = newest;
+      localStorage.setItem('lastRead', JSON.stringify(lastRead));
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Send
-    document.getElementById('sendBtn').onclick=async()=>{
-      const txt=document.getElementById('message').value.trim();
+    // open emoji picker for reactions
+    window.openEmoji = idx => {
+      const e = prompt('Emoji to react:');
+      if(e) react(idx, e);
+    };
+
+    // send message
+    sendBtn.onclick = async()=>{
+      const txt = msgInp.value.trim();
       if(!txt) return;
-      await fetch(`${API}/send`,{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ user, message:txt })
-      });
-      document.getElementById('message').value='';
+      socket.emit('typing', { user, channel:current });
+      if(current==='public') {
+        await fetch(`${API}/send`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ user, message:txt })
+        });
+      } else {
+        await fetch(`${API}/pm`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ from:user, to:current, message:txt })
+        });
+      }
+      msgInp.value='';
       loadChat();
     };
 
-    // Admin
-    if(isAdmin){
-      document.getElementById('clearBtn').onclick=()=>fetch(`${API}/clear`,{method:'POST'}).then(loadChat);
-      document.getElementById('pauseBtn').onclick=()=>fetch(`${API}/pause`,{method:'POST'}).then(loadChat);
-      document.getElementById('unpauseBtn').onclick=()=>fetch(`${API}/unpause`,{method:'POST'}).then(loadChat);
-      document.getElementById('offBtn').onclick=()=>fetch(`${API}/off`,{method:'POST'}).then(loadChat);
-      document.getElementById('onBtn').onclick=()=>fetch(`${API}/on`,{method:'POST'}).then(loadChat);
-      document.getElementById('statsBtn').onclick=()=>window.open('stats.html','_blank');
-    }
+    // edit / delete / reply / react / pin
+    window.edit = async(idx)=>{
+      const newText = prompt('Edit message:');
+      if(!newText) return;
+      await fetch(`${API}/edit/${idx}`, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ user, message:newText })
+      });
+      loadChat();
+    };
+    window.del = async(idx)=> {
+      if(!confirm('Delete message?')) return;
+      await fetch(`${API}/delete/${idx}`, {
+        method:'DELETE',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ user })
+      });
+      loadChat();
+    };
+    window.reply = idx => {
+      msgInp.value = `@${idx} `;
+      msgInp.focus();
+    };
+    window.react = async(idx,e)=> {
+      await fetch(`${API}/react`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ msgIndex:idx, emoji:e, user })
+      });
+      loadChat();
+    };
+    window.pin = async(idx)=> {
+      await fetch(`${API}/pin`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ msgIndex:idx })
+      });
+      loadChat();
+    };
 
-    document.getElementById('allUsersBtn').onclick=()=>location.href='users.html';
+    // typing indicator
+    msgInp.onkeypress = () => {
+      socket.emit('typing',{ user, channel:current });
+    };
 
-    // Init
+    // initialize everything
     await loadChannels();
-    await loadChat();
-    setInterval(loadChat,2000);
+    loadStories();
+    loadChat();
+    setInterval(loadChat, 2000);
   })();
   </script>
 </body>
