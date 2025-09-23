@@ -250,11 +250,28 @@
   </div>
 
   <!-- MAIN AREA -->
-  <div id="main" style="position:relative;">
+    <div id="main" style="position:relative;">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
+      <span id="adminActions" style="display:none;">
+        <button id="showBannedBtn">Show Banned</button>
+        <button id="helpBtn">Help</button>
+      </span>
     </div>
+
+    <!-- THREADS UI -->
+    <div id="threadsPanel" style="margin-bottom:20px; background:#f9f9f9; border-radius:8px; padding:10px;">
+      <h3>Threads</h3>
+      <div id="threadList"></div>
+      <form id="newThreadForm" style="margin-top:10px;">
+        <input type="text" id="threadTitle" placeholder="Thread title" required style="width:40%;">
+        <input type="text" id="threadText" placeholder="First message" required style="width:40%;">
+        <button type="submit">Create Thread</button>
+      </form>
+    </div>
+
+    <div id="threadView" style="display:none; background:#fff; border-radius:8px; box-shadow:0 2px 8px #0001; padding:10px; margin-bottom:20px;"></div>
 
     <div id="chatBox"></div>
 
@@ -356,11 +373,94 @@
   <script>
   // Roadmap edit/save functionality removed for public chat
 
-  (async function(){
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const user    = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!user) return location.href = 'index.html';
+  // THREADS/REPLIES UI LOGIC
+  const API = 'https://chat-backend-pdzh.onrender.com';
+  const user = localStorage.getItem('chatUser');
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+  // Admin-only actions
+  const adminActions = document.getElementById('adminActions');
+  if (isAdmin) adminActions.style.display = '';
+  document.getElementById('showBannedBtn').onclick = async () => {
+    const res = await fetch(`${API}/showbanned?admin=${user}`);
+    if (res.ok) alert('Banned: ' + (await res.json()).join(', '));
+    else alert('Forbidden');
+  };
+  document.getElementById('helpBtn').onclick = async () => {
+    const res = await fetch(`${API}/help?admin=${user}`);
+    if (res.ok) alert(JSON.stringify(await res.json(), null, 2));
+    else alert('Forbidden');
+  };
+
+  // THREADS UI
+  const threadListDiv = document.getElementById('threadList');
+  const threadViewDiv = document.getElementById('threadView');
+  const newThreadForm = document.getElementById('newThreadForm');
+
+  async function loadThreads() {
+    const res = await fetch(`${API}/threads`);
+    const threads = await res.json();
+    threadListDiv.innerHTML = '';
+    threads.forEach(t => {
+      const btn = document.createElement('button');
+      btn.textContent = `${t.title} (${t.messageCount})`;
+      btn.onclick = () => showThread(t.id, t.title);
+      threadListDiv.appendChild(btn);
+    });
+  }
+
+  async function showThread(threadId, threadTitle) {
+    const res = await fetch(`${API}/threads/${threadId}`);
+    const messages = await res.json();
+    threadViewDiv.style.display = 'block';
+    threadViewDiv.innerHTML = `<h4>${threadTitle}</h4>`;
+    // Render messages and replies (flat, with parentId)
+    messages.forEach(msg => {
+      const replyBtn = `<button data-msgid="${msg.id}" class="replyBtn">Reply</button>`;
+      threadViewDiv.innerHTML += `<div style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;"><strong>${msg.user}</strong>: ${msg.text} ${replyBtn}</div>`;
+    });
+    // Reply form
+    threadViewDiv.innerHTML += `<form id="replyForm" style="margin-top:10px;"><input type="text" id="replyText" placeholder="Reply..." required style="width:70%;"><input type="hidden" id="replyParentId"><button type="submit">Send Reply</button></form><button id="closeThreadView" style="margin-top:10px;">Close</button>`;
+
+    // Reply button logic
+    threadViewDiv.querySelectorAll('.replyBtn').forEach(btn => {
+      btn.onclick = () => {
+        document.getElementById('replyParentId').value = btn.getAttribute('data-msgid');
+        document.getElementById('replyText').focus();
+      };
+    });
+    document.getElementById('closeThreadView').onclick = () => {
+      threadViewDiv.style.display = 'none';
+    };
+    document.getElementById('replyForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('replyText').value;
+      const parentId = document.getElementById('replyParentId').value || null;
+      await fetch(`${API}/threads/${threadId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, text, parentId })
+      });
+      showThread(threadId, threadTitle);
+    };
+  }
+
+  newThreadForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('threadTitle').value;
+    const text = document.getElementById('threadText').value;
+    await fetch(`${API}/threads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, creator: user, text })
+    });
+    newThreadForm.reset();
+    loadThreads();
+  };
+
+  loadThreads();
+  // ...existing code...
+  if (!user) return location.href = 'index.html';
 
     // ELEMENTS
     const sidebar    = document.getElementById('sidebar');
