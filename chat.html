@@ -373,6 +373,25 @@
   if (!user) return location.href = 'index.html';
   document.getElementById('username').innerText = user;
 
+  // Define sidebar and settings modal variables
+  const sidebar = document.getElementById('sidebar');
+  const toggle = document.getElementById('settingsToggle');
+  const modal = document.getElementById('settingsModal');
+  const closeBtn = document.getElementById('closeBtn');
+  const applyBtn = document.getElementById('applyBtn');
+  const optSidebarBg = document.getElementById('optSidebarBg');
+  const optMainBg = document.getElementById('optMainBg');
+  const optChatBg = document.getElementById('optChatBg');
+  const optTextColor = document.getElementById('optTextColor');
+  const optFontSize = document.getElementById('optFontSize');
+  const sizeVal = document.getElementById('optFontSizeVal');
+  const optSound = document.getElementById('optSound');
+  const optTimestamp = document.getElementById('optTimestamp');
+
+  // Emoji board null checks
+  const customEmojiList = document.getElementById('customEmojiBoard') || { querySelectorAll: ()=>[], innerHTML: '' };
+  const adminCommands = document.getElementById('adminCommands') || { children: [] };
+
     // THREADS/REPLIES UI LOGIC
     // Admin-only actions
     const adminActions = document.getElementById('adminActions');
@@ -388,10 +407,7 @@
       else alert('Forbidden');
     };
 
-    // THREADS UI
-    const threadListDiv = document.getElementById('threadList');
-    const threadViewDiv = document.getElementById('threadView');
-    const newThreadForm = document.getElementById('newThreadForm');
+  // THREADS UI (removed for simplicity)
 
     // Simplified reply logic
     let replyTo = null;
@@ -624,6 +640,8 @@
         channels = ['public','GOD HIMSELF'];
       }
       renderChannels();
+      // Always load chat after channels are set
+      await loadChat();
     }
 
     function renderChannels(){
@@ -652,6 +670,10 @@
         sidebar.insertBefore(el, toggle);
       });
     }
+
+    // Initial load: channels, then chat, then auto-refresh
+    await loadChannels();
+    setInterval(loadChat, 2000);
 
     // EMOJI / MOJICON
     document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','emoji');
@@ -694,7 +716,7 @@
     // Admin custom emoji editor logic
     const customEmojiEditor = document.getElementById('customEmojiEditor');
     const customEmojiBtn = document.getElementById('customEmojiBtn');
-    const adminCommands = document.getElementById('adminCommands');
+  // ...existing code... (removed duplicate adminCommands declaration)
     const customEmojiEdit = document.getElementById('custom-emoji-edit');
     const saveCustomEmojiBtn = document.getElementById('saveCustomEmoji');
     const closeCustomEmojiBtn = document.getElementById('closeCustomEmoji');
