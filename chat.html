@@ -35,10 +35,23 @@
       box-sizing: border-box;
       overflow-y: auto;
     }
-    .rank-Egg { color: black; font-weight: bold; } 
+    .rank-Egg { color: black; font-weight: bold; }
+    .rank-test_rank_for_admins { color: rgb(85, 16, 76); font-weight: bold; } 
     .rank-Sigmer { 
       font-weight: bold; 
       background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); 
+      -webkit-background-clip: text; 
+      color: transparent; 
+    } 
+    .rank-Chopped { 
+      font-weight: bold; 
+      background: linear-gradient(to right, red, black,  darkblue blue,yellow, darkred, violet); 
+      -webkit-background-clip: text; 
+      color: transparent; 
+    } 
+    .rank-Sunburnt { 
+      font-weight: bold; 
+      background: linear-gradient(to right, black, darkred, red, hotpink, orange, yellow); 
       -webkit-background-clip: text; 
       color: transparent; 
     } 
@@ -254,6 +267,7 @@
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
+      <button id="allranksBtn">All Users</button>
       <span id="adminActions" style="display:none;">
         <button id="showBannedBtn">Show Banned</button>
         <button id="helpBtn">Help</button>
@@ -487,6 +501,7 @@
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
     document.getElementById('allUsersBtn').onclick = () => location.href = 'users.html';
+    document.getElementById('allranksBtn').onclick = () => location.href = 'ranks.html';
 
     // WELCOME POPUP
     welcomeClose.onclick = () => welcomeModal.style.display = 'none';

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple List Template</title>
+
+    <style>
+        /* Basic page setup */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* The new element for the first line */
+        .first-line {
+            font-size: 1rem;
+            color: #555;
+            background-color: #eef3f6;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 2rem;
+            font-family: monospace; /* Use a monospaced font for code */
+            white-space: pre-wrap; /* Preserves formatting and wraps text */
+        }
+
+        /* Back button styling */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        .back-button:hover {
+            background-color: #777;
+        }
+
+        /* List styling */
+        .simple-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .list-item {
+            background-color: #ffffff;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .list-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .list-item a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            padding: 1.5rem;
+        }
+
+        .item-title {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-description {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- The button is outside the main list container for easier positioning -->
+        <button class="back-button" onclick="goBack()">Back</button>
+
+        <!-- Display the specific text in the first line -->
+        <pre class="first-line">.rank-Bloody { color: darkred; font-weight: bold; }</pre>
+
+        <h1>My Awesome List</h1>
+        
+        <ul class="simple-list">
+            <li class="list-item">
+                <a href="#">
+                    <span class="item-title">List Item One</span>
+                    <span class="item-description">A short description for the first item.</span>
+                </a>
+            </li>
+            <li class="list-item">
+                <a href="#">
+                    <span class="item-title">List Item Two</span>
+                    <span class="item-description">This item has a slightly longer description that can span multiple lines.</span>
+                </a>
+            </li>
+            <li class="list-item">
+                <a href="#">
+                    <span class="item-title">List Item Three</span>
+                    <span class="item-description">Another example entry.</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <script>
+        // JavaScript for the back button
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+
+</body>
+</html>
