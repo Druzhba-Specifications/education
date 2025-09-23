@@ -263,20 +263,21 @@
       <button id="sendBtn">Send</button>
       <button id="emojiBtn">😀</button>
       <button id="mojiconBtn">(◐ω◑)</button>
-      <button id="adminRoadmapBtn" style="display:none;">🗺️ Roadmap</button>
+  <button id="adminEmojiBtn" style="display:none;">✨ Emojis</button>
     </div>
-    <!-- Admin Roadmap Board (hidden by default) -->
-    <div id="adminRoadmapBoard" style="display:none; position: fixed; top: 100px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
-      <h2 style="margin-top:0;">Edit Roadmap</h2>
-      <ul id="admin-roadmap-list" style="list-style: none; padding: 0;">
-        <li><strong>Add Threads/Replies and Roadmap Table:</strong>Done!</li>
-        <li><strong>Private DMs for all, not just GOD HIMSELF for support:</strong>Not Started</li>
-        <li><strong>Polls</strong>Not Started</li>
-        <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
+    <!-- Admin Emoji Board (hidden by default) -->
+    <div id="adminEmojiBoard" style="display:none; position: fixed; top: 100px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
+      <button id="adminEmojiX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
+      <h2 style="margin-top:0;">Add New Emojis</h2>
+      <ul id="admin-emoji-list" style="list-style: none; padding: 0;">
+        <li>😀</li>
+        <li>🔥</li>
+        <li>💯</li>
+        <li>Placeholder Emoji</li>
       </ul>
-      <textarea id="admin-roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
-      <button id="saveAdminRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
-      <button id="closeAdminRoadmap" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
+      <textarea id="admin-emoji-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Add emojis here, one per line..."></textarea>
+      <button id="saveAdminEmoji" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Emojis</button>
+      <button id="closeAdminEmoji" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
     </div>
 
     <div id="emojiBoard"></div>
@@ -459,31 +460,33 @@
     // EMOJI / MOJICON
     document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','emoji');
     document.getElementById('mojiconBtn').onclick = () => toggleBoard('mojiconBoard','mojicon');
-    // Admin Roadmap Board logic
-    const adminBtn = document.getElementById('adminRoadmapBtn');
-    const adminBoard = document.getElementById('adminRoadmapBoard');
-    const saveAdminBtn = document.getElementById('saveAdminRoadmap');
-    const closeAdminBtn = document.getElementById('closeAdminRoadmap');
-    const editAdminArea = document.getElementById('admin-roadmap-edit');
-    const adminList = document.getElementById('admin-roadmap-list');
-    if (isAdmin && adminBtn) {
-      adminBtn.style.display = '';
-      adminBtn.onclick = function() {
-        adminBoard.style.display = 'block';
-        // Load current roadmap into textarea
-        const items = Array.from(adminList.querySelectorAll('li')).map(li => li.innerText);
-        editAdminArea.value = items.join('\n');
+    // Admin Emoji Board logic
+    const adminEmojiBtn = document.getElementById('adminEmojiBtn');
+    const adminEmojiBoard = document.getElementById('adminEmojiBoard');
+    const saveAdminEmojiBtn = document.getElementById('saveAdminEmoji');
+    const closeAdminEmojiBtn = document.getElementById('closeAdminEmoji');
+    const editAdminEmojiArea = document.getElementById('admin-emoji-edit');
+    const adminEmojiList = document.getElementById('admin-emoji-list');
+    const xEmojiBtn = document.getElementById('adminEmojiX');
+    if (isAdmin && adminEmojiBtn) {
+      adminEmojiBtn.style.display = '';
+      adminEmojiBtn.onclick = function() {
+        adminEmojiBoard.style.display = 'block';
+        // Load current emojis into textarea
+        const items = Array.from(adminEmojiList.querySelectorAll('li')).map(li => li.innerText);
+        editAdminEmojiArea.value = items.join('\n');
       };
     }
-    if (closeAdminBtn) closeAdminBtn.onclick = () => adminBoard.style.display = 'none';
-    if (saveAdminBtn) {
-      saveAdminBtn.onclick = function() {
-        const lines = editAdminArea.value.split('\n').filter(l => l.trim());
-        adminList.innerHTML = '';
+    if (closeAdminEmojiBtn) closeAdminEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
+    if (xEmojiBtn) xEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
+    if (saveAdminEmojiBtn) {
+      saveAdminEmojiBtn.onclick = function() {
+        const lines = editAdminEmojiArea.value.split('\n').filter(l => l.trim());
+        adminEmojiList.innerHTML = '';
         lines.forEach(line => {
-          adminList.innerHTML += `<li>${line}</li>`;
+          adminEmojiList.innerHTML += `<li>${line}</li>`;
         });
-        adminBoard.style.display = 'none';
+        adminEmojiBoard.style.display = 'none';
       };
     }
 
