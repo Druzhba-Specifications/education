@@ -260,18 +260,7 @@
       </span>
     </div>
 
-    <!-- THREADS UI -->
-    <div id="threadsPanel" style="margin-bottom:20px; background:#f9f9f9; border-radius:8px; padding:10px;">
-      <h3>Threads</h3>
-      <div id="threadList"></div>
-      <form id="newThreadForm" style="margin-top:10px;">
-        <input type="text" id="threadTitle" placeholder="Thread title" required style="width:40%;">
-        <input type="text" id="threadText" placeholder="First message" required style="width:40%;">
-        <button type="submit">Create Thread</button>
-      </form>
-    </div>
-
-    <div id="threadView" style="display:none; background:#fff; border-radius:8px; box-shadow:0 2px 8px #0001; padding:10px; margin-bottom:20px;"></div>
+    <!-- Thread UI removed for simplicity -->
 
     <div id="chatBox"></div>
 
@@ -399,92 +388,156 @@
     const threadViewDiv = document.getElementById('threadView');
     const newThreadForm = document.getElementById('newThreadForm');
 
-    async function loadThreads() {
-      const res = await fetch(`${API}/threads`);
-      const threads = await res.json();
-      threadListDiv.innerHTML = '';
-      threads.forEach(t => {
-        const btn = document.createElement('button');
-        btn.textContent = `${t.title} (${t.messageCount})`;
-        btn.onclick = () => showThread(t.id, t.title);
-        threadListDiv.appendChild(btn);
-      });
+    // Simplified reply logic
+    let replyTo = null;
+    let replyText = null;
+
+    // Patch chat rendering to add clickable usernames
+    function renderChatMessage(sender, msg, replyInfo) {
+      let replyHtml = '';
+      if (replyInfo) {
+        replyHtml = `<span style="font-style:italic;">[responding to ${replyInfo.user}: "${replyInfo.text}"]</span> `;
+      }
+      return `<strong class="chat-username" data-user="${sender}">${sender}</strong>>${replyHtml}${msg}`;
     }
 
-    async function showThread(threadId, threadTitle) {
-      const res = await fetch(`${API}/threads/${threadId}`);
-      const messages = await res.json();
-      threadViewDiv.style.display = 'block';
-      threadViewDiv.innerHTML = `<h4>${threadTitle}</h4>`;
-      // Render messages and replies (flat, with parentId)
-      messages.forEach(msg => {
-        const replyBtn = `<button data-msgid="${msg.id}" class="replyBtn">Reply</button>`;
-        threadViewDiv.innerHTML += `<div style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;"><strong>${msg.user}</strong>: ${msg.text} ${replyBtn}</div>`;
-      });
-      // Reply form
-      threadViewDiv.innerHTML += `<form id="replyForm" style="margin-top:10px;"><input type="text" id="replyText" placeholder="Reply..." required style="width:70%;"><input type="hidden" id="replyParentId"><button type="submit">Send Reply</button></form><button id="closeThreadView" style="margin-top:10px;">Close</button>`;
+    // Patch loadChat to support reply context
+    async function loadChat() {
+      const box = document.getElementById('chatBox');
+      let data;
+      if (current==='public') {
+        data = await fetch(`${API}/log`).then(r=>r.json());
+      } else {
+        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
+                 .then(r=>r.json());
+      }
 
-      // Reply button logic
-      threadViewDiv.querySelectorAll('.replyBtn').forEach(btn => {
-        btn.onclick = () => {
-          document.getElementById('replyParentId').value = btn.getAttribute('data-msgid');
-          document.getElementById('replyText').focus();
+      // ...existing code for ranks, banned, status...
+      const [ranks,banned,status] = await Promise.all([
+        fetch(`${API}/ranks.json`).then(r=>r.json()),
+        fetch(`${API}/blacklist.json`).then(r=>r.json()),
+        fetch(`${API}/status`).then(r=>r.json())
+      ]);
+
+      if (status.off && user!=='GOD HIMSELF') return location.href='off.html';
+      if (banned.includes(user))    return location.href='index.html';
+
+      box.innerHTML = '';
+      let newest = lastRead[current]||0;
+
+      // Show login/logoff system message if present
+      if (current==='public') {
+        const sysMsg = localStorage.getItem('systemMessage');
+        if (sysMsg) {
+          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
+          localStorage.removeItem('systemMessage');
+        }
+      }
+
+      // Track last messages for reply context
+      let lastMessages = [];
+      data.forEach((item, idx) => {
+        if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
+          box.innerHTML += `<div class="msg system">${item}</div>`;
+          return;
+        }
+        let from,msg,ts;
+        if (current==='public') {
+          [from,msg] = item.split('>>');
+          ts = Date.now();
+        } else {
+          from = item.from;
+          msg  = item.message;
+          ts   = item.ts;
+        }
+        // Check for reply context
+        let replyInfo = null;
+        if (msg.startsWith('[replyto:')) {
+          // Format: [replyto:username:message] actual message
+          const match = msg.match(/^\[replyto:(.+?):(.+?)\](.*)$/);
+          if (match) {
+            replyInfo = { user: match[1], text: match[2] };
+            msg = match[3].trim();
+          }
+        }
+        // ...existing code for sound, unread-dot, etc...
+        const isNew = ts > (lastRead[current]||0);
+        if (isNew && from!==user && optSound.checked) {
+          notifAudio.play();
+        }
+        if (isNew && from!==user) {
+          const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
+          if (chEl) chEl.querySelector('.unread-dot').style.display = 'block';
+        }
+        if (ts > newest) newest = ts;
+
+        const sender    = from.trim();
+        const userRanks = ranks[sender] || [];
+        const rankHtml  = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
+        let line = renderChatMessage(sender, msg, replyInfo);
+        if (optTimestamp.checked) {
+          const t = new Date(ts).toLocaleTimeString();
+          line = `[${t}] ${line}`;
+        }
+        box.innerHTML += `<div class="msg">${line}</div>`;
+        lastMessages.push({ user: sender, text: msg });
+      });
+
+      lastRead[current] = newest;
+      localStorage.setItem('lastRead', JSON.stringify(lastRead));
+      box.scrollTop = box.scrollHeight;
+
+      // Add click handlers to usernames for reply
+      box.querySelectorAll('.chat-username').forEach(el => {
+        el.onclick = () => {
+          replyTo = el.getAttribute('data-user');
+          // Find last message from this user
+          const lastMsg = lastMessages.reverse().find(m => m.user === replyTo);
+          replyText = lastMsg ? lastMsg.text : '';
+          document.getElementById('message').focus();
         };
       });
-      document.getElementById('closeThreadView').onclick = () => {
-        threadViewDiv.style.display = 'none';
-      };
-      document.getElementById('replyForm').onsubmit = async (e) => {
-        e.preventDefault();
-        const text = document.getElementById('replyText').value;
-        const parentId = document.getElementById('replyParentId').value || null;
-        await fetch(`${API}/threads/${threadId}/reply`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user, text, parentId })
-        });
-        showThread(threadId, threadTitle);
-      };
     }
 
-    newThreadForm.onsubmit = async (e) => {
-      e.preventDefault();
-      const title = document.getElementById('threadTitle').value;
-      const text = document.getElementById('threadText').value;
-      await fetch(`${API}/threads`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, creator: user, text })
-      });
-      newThreadForm.reset();
-      loadThreads();
+    // Patch sendBtn to support reply
+    document.getElementById('sendBtn').onclick = () => {
+      const inp = document.getElementById('message');
+      let txt = inp.value.trim();
+      if (!txt) return;
+      if (replyTo && replyText) {
+        txt = `[replyto:${replyTo}:${replyText}] ${txt}`;
+        replyTo = null;
+        replyText = null;
+      }
+      if (current==='public') {
+        if (isAdmin && txt.startsWith('/')) {
+          const [cmd,target,...rest] = txt.split(' ');
+          const ep = cmd.slice(1);
+          const body = ep==='warn'
+            ? { user: target, reason: rest.join(' ') }
+            : { user: target };
+          fetch(`${API}/${ep}`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(body)
+          });
+        } else {
+          fetch(`${API}/send`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ user, message: txt })
+          });
+        }
+      } else {
+        fetch(`${API}/pm`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ from: user, to: current, message: txt })
+        });
+      }
+      inp.value = '';
+      loadChat();
     };
-
-    loadThreads();
-    // ...existing code...
-
-    // ELEMENTS
-    const sidebar    = document.getElementById('sidebar');
-    const toggle     = document.getElementById('settingsToggle');
-    const modal      = document.getElementById('settingsModal');
-    const applyBtn   = document.getElementById('applyBtn');
-    const closeBtn   = document.getElementById('closeBtn');
-    const notifAudio = document.getElementById('notifAudio');
-
-    const optSound     = document.getElementById('optSound');
-    const optTimestamp = document.getElementById('optTimestamp');
-    const optSidebarBg = document.getElementById('optSidebarBg');
-    const optMainBg    = document.getElementById('optMainBg');
-    const optChatBg    = document.getElementById('optChatBg');
-    const optTextColor = document.getElementById('optTextColor');
-    const optFontSize  = document.getElementById('optFontSize');
-    const sizeVal      = document.getElementById('optFontSizeVal');
-
-    const welcomeModal = document.getElementById('welcomeModal');
-    const welcomeClose = document.getElementById('welcomeClose');
-
-    // SHOW USER & ADMIN CONTROLS
-    document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
     document.getElementById('allUsersBtn').onclick = () => location.href = 'users.html';
 
