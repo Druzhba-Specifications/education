@@ -39,25 +39,22 @@
     .rank-Sigmer { 
       font-weight: bold; 
       background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); 
-  -webkit-background-clip: text;
-  background-clip: text;
+      -webkit-background-clip: text; 
       color: transparent; 
     } 
     .rank-Discorder { 
       font-weight: bold; 
       background: linear-gradient(to right, blue, darkblue, indigo, #682860, violet); 
-  -webkit-background-clip: text;
-  background-clip: text;
+      -webkit-background-clip: text; 
       color: transparent; 
     } 
-  .rank-BEAN { font-weight: bold; background: linear-gradient(to right, black, #B7410E, brown, orange, yellow); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .rank-BEAN { font-weight: bold; background: linear-gradient(to right, black, #B7410E, brown, orange, yellow); -webkit-background-clip: text; color: transparent; } 
     .rank-OG { color: gold; font-weight: bold; } 
     .rank-Bloody { color: darkred; font-weight: bold; } 
     .rank-ADMIN { 
       font-weight: bold; 
       background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet); background-size: 400% 400%; 
-  -webkit-background-clip: text;
-  background-clip: text;
+      -webkit-background-clip: text; 
       color: transparent; 
       animation: rainbowMove 5s infinite linear; 
     } 
@@ -253,17 +250,11 @@
   </div>
 
   <!-- MAIN AREA -->
-    <div id="main" style="position:relative;">
+  <div id="main">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
-      <span id="adminActions" style="display:none;">
-        <button id="showBannedBtn">Show Banned</button>
-        <button id="helpBtn">Help</button>
-      </span>
     </div>
-
-    <!-- Thread UI removed for simplicity -->
 
     <div id="chatBox"></div>
 
@@ -272,40 +263,10 @@
       <button id="sendBtn">Send</button>
       <button id="emojiBtn">😀</button>
       <button id="mojiconBtn">(◐ω◑)</button>
-      <button id="customEmojiBtn">🆕</button>
-    </div>
-    <!-- Admin Emoji Board (hidden by default) -->
-    <div id="adminEmojiBoard" style="display:none; position: fixed; top: 100px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
-      <button id="adminEmojiX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
-      <h2 style="margin-top:0;">Add New Emojis</h2>
-      <ul id="admin-emoji-list" style="list-style: none; padding: 0;">
-        <li>😀</li>
-        <li>🔥</li>
-        <li>💯</li>
-        <li>Placeholder Emoji</li>
-      </ul>
-      <textarea id="admin-emoji-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Add emojis here, one per line..."></textarea>
-      <button id="saveAdminEmoji" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Emojis</button>
-      <button id="closeAdminEmoji" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
     </div>
 
     <div id="emojiBoard"></div>
     <div id="mojiconBoard"></div>
-    <div id="customEmojiBoard" style="display:none; margin-bottom:10px;"></div>
-    <!-- Admin custom emoji editor -->
-    <div id="customEmojiEditor" style="display:none; position: fixed; top: 120px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
-      <button id="customEmojiEditorX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
-      <h2 style="margin-top:0;">Edit Custom Emojis</h2>
-      <ul id="adminCommands" style="list-style: none; padding: 0;">
-        <li>😺</li>
-        <li>🦄</li>
-        <li>🍕</li>
-        <li>Placeholder Emoji</li>
-      </ul>
-      <textarea id="custom-emoji-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Add custom emojis here, one per line..."></textarea>
-      <button id="saveCustomEmoji" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Custom Emojis</button>
-      <button id="closeCustomEmoji" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
-    </div>
 
     <div id="adminControls">
       <button id="clearBtn">Clear</button>
@@ -315,8 +276,7 @@
       <button id="onBtn">On</button>
       <button id="statsBtn">Stats</button>
     </div>
-
-  <!-- Roadmap UI removed for public chat -->
+  </div>
 
   <!-- SETTINGS POPUP -->
   <div id="settingsModal">
@@ -363,224 +323,34 @@
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
-  // Roadmap edit/save functionality removed for public chat
-
   (async function(){
-  // CHANGE THIS TO YOUR SERVER URL!
-  const API     = 'http://localhost:3000';
-  const user    = localStorage.getItem('chatUser');
-  const isAdmin = localStorage.getItem('isAdmin') === 'true';
-  if (!user) return location.href = 'index.html';
-  document.getElementById('username').innerText = user;
+    const API     = 'https://chat-backend-pdzh.onrender.com';
+    const user    = localStorage.getItem('chatUser');
+    const isAdmin = localStorage.getItem('isAdmin') === 'true';
+    if (!user) return location.href = 'index.html';
 
-  // Define sidebar and settings modal variables
-  const sidebar = document.getElementById('sidebar');
-  const toggle = document.getElementById('settingsToggle');
-  const modal = document.getElementById('settingsModal');
-  const closeBtn = document.getElementById('closeBtn');
-  const applyBtn = document.getElementById('applyBtn');
-  const optSidebarBg = document.getElementById('optSidebarBg');
-  const optMainBg = document.getElementById('optMainBg');
-  const optChatBg = document.getElementById('optChatBg');
-  const optTextColor = document.getElementById('optTextColor');
-  const optFontSize = document.getElementById('optFontSize');
-  const sizeVal = document.getElementById('optFontSizeVal');
-  const optSound = document.getElementById('optSound');
-  const optTimestamp = document.getElementById('optTimestamp');
+    // ELEMENTS
+    const sidebar    = document.getElementById('sidebar');
+    const toggle     = document.getElementById('settingsToggle');
+    const modal      = document.getElementById('settingsModal');
+    const applyBtn   = document.getElementById('applyBtn');
+    const closeBtn   = document.getElementById('closeBtn');
+    const notifAudio = document.getElementById('notifAudio');
 
-  // Emoji board null checks
-  const customEmojiList = document.getElementById('customEmojiBoard') || { querySelectorAll: ()=>[], innerHTML: '' };
-  const adminCommands = document.getElementById('adminCommands') || { children: [] };
+    const optSound     = document.getElementById('optSound');
+    const optTimestamp = document.getElementById('optTimestamp');
+    const optSidebarBg = document.getElementById('optSidebarBg');
+    const optMainBg    = document.getElementById('optMainBg');
+    const optChatBg    = document.getElementById('optChatBg');
+    const optTextColor = document.getElementById('optTextColor');
+    const optFontSize  = document.getElementById('optFontSize');
+    const sizeVal      = document.getElementById('optFontSizeVal');
 
-    // THREADS/REPLIES UI LOGIC
-    // Admin-only actions
-    const adminActions = document.getElementById('adminActions');
-    if (isAdmin) adminActions.style.display = '';
-    document.getElementById('showBannedBtn').onclick = async () => {
-      const res = await fetch(`${API}/showbanned?admin=${user}`);
-      if (res.ok) alert('Banned: ' + (await res.json()).join(', '));
-      else alert('Forbidden');
-    };
-    document.getElementById('helpBtn').onclick = async () => {
-      const res = await fetch(`${API}/help?admin=${user}`);
-      if (res.ok) alert(JSON.stringify(await res.json(), null, 2));
-      else alert('Forbidden');
-    };
+    const welcomeModal = document.getElementById('welcomeModal');
+    const welcomeClose = document.getElementById('welcomeClose');
 
-  // THREADS UI (removed for simplicity)
-
-    // Simplified reply logic
-    let replyTo = null;
-    let replyText = null;
-
-    // Patch chat rendering to add clickable usernames
-    function renderChatMessage(sender, msg, replyInfo) {
-      let replyHtml = '';
-      if (replyInfo) {
-        replyHtml = `<span style="font-style:italic;">[responding to ${replyInfo.user}: "${replyInfo.text}"]</span> `;
-      }
-      return `<strong class="chat-username" data-user="${sender}">${sender}</strong>>${replyHtml}${msg}`;
-    }
-
-    // Patch loadChat to support reply context
-    async function loadChat() {
-      const box = document.getElementById('chatBox');
-      let data;
-      try {
-        if (current==='public') {
-          data = await fetch(`${API}/log`).then(r=>r.json());
-        } else {
-          data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
-                   .then(r=>r.json());
-        }
-      } catch (err) {
-        console.error('Error fetching messages:', err);
-        box.innerHTML = '<div class="msg system">Error loading messages.</div>';
-        return;
-      }
-
-      // ...existing code for ranks, banned, status...
-      let ranks = {}, banned = [], status = {};
-      try {
-        [ranks, banned, status] = await Promise.all([
-          fetch(`${API}/ranks.json`).then(r=>r.json()),
-          fetch(`${API}/blacklist.json`).then(r=>r.json()),
-          fetch(`${API}/status`).then(r=>r.json())
-        ]);
-      } catch (err) {
-        console.error('Error fetching ranks/banned/status:', err);
-        box.innerHTML = '<div class="msg system">Error loading chat metadata.</div>';
-        return;
-      }
-
-      if (status.off && user!=='GOD HIMSELF') return location.href='off.html';
-      if (banned.includes(user))    return location.href='index.html';
-
-      box.innerHTML = '';
-      let newest = lastRead[current]||0;
-
-      // Show login/logoff system message if present
-      if (current==='public') {
-        const sysMsg = localStorage.getItem('systemMessage');
-        if (sysMsg) {
-          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
-          localStorage.removeItem('systemMessage');
-        }
-      }
-
-      // Track last messages for reply context
-      let lastMessages = [];
-      data.forEach((item, idx) => {
-        if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
-          box.innerHTML += `<div class="msg system">${item}</div>`;
-          return;
-        }
-        let from,msg,ts;
-        if (current==='public') {
-          [from,msg] = item.split('>>');
-          ts = Date.now();
-        } else {
-          from = item.from;
-          msg  = item.message;
-          ts   = item.ts;
-        }
-        // Check for reply context
-        let replyInfo = null;
-        if (msg.startsWith('[replyto:')) {
-          // Format: [replyto:username:message] actual message
-          const match = msg.match(/^\[replyto:(.+?):(.+?)\](.*)$/);
-          if (match) {
-            replyInfo = { user: match[1], text: match[2] };
-            msg = match[3].trim();
-          }
-        }
-        // ...existing code for sound, unread-dot, etc...
-        const isNew = ts > (lastRead[current]||0);
-        if (isNew && from!==user && optSound.checked) {
-          notifAudio.play();
-        }
-        if (isNew && from!==user) {
-          const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
-          if (chEl) chEl.querySelector('.unread-dot').style.display = 'block';
-        }
-        if (ts > newest) newest = ts;
-
-        const sender    = from.trim();
-        const userRanks = ranks[sender] || [];
-        const rankHtml  = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
-        let line = renderChatMessage(sender, msg, replyInfo);
-        if (optTimestamp.checked) {
-          const t = new Date(ts).toLocaleTimeString();
-          line = `[${t}] ${line}`;
-        }
-        box.innerHTML += `<div class="msg">${line}</div>`;
-        lastMessages.push({ user: sender, text: msg });
-      });
-
-      lastRead[current] = newest;
-      localStorage.setItem('lastRead', JSON.stringify(lastRead));
-      box.scrollTop = box.scrollHeight;
-
-      // Add click handlers to usernames for reply
-      box.querySelectorAll('.chat-username').forEach(el => {
-        el.onclick = () => {
-          replyTo = el.getAttribute('data-user');
-          // Find last message from this user
-          const lastMsg = lastMessages.reverse().find(m => m.user === replyTo);
-          replyText = lastMsg ? lastMsg.text : '';
-          document.getElementById('message').focus();
-        };
-      });
-    }
-
-    // Patch sendBtn to support reply
-    document.getElementById('sendBtn').onclick = () => {
-      const inp = document.getElementById('message');
-      let txt = inp.value.trim();
-      if (!txt) return;
-      if (replyTo && replyText) {
-        txt = `[replyto:${replyTo}:${replyText}] ${txt}`;
-        replyTo = null;
-        replyText = null;
-      }
-      if (current==='public') {
-        if (isAdmin && txt.startsWith('/')) {
-          const [cmd,target,...rest] = txt.split(' ');
-          const ep = cmd.slice(1);
-          const body = ep==='warn'
-            ? { user: target, reason: rest.join(' ') }
-            : { user: target };
-          fetch(`${API}/${ep}`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(body)
-          }).catch(err => {
-            console.error('Error sending admin command:', err);
-            alert('Error sending admin command.');
-          });
-        } else {
-          fetch(`${API}/send`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ user, message: txt })
-          }).catch(err => {
-            console.error('Error sending message:', err);
-            alert('Error sending message.');
-          });
-        }
-      } else {
-        fetch(`${API}/pm`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ from: user, to: current, message: txt })
-        }).catch(err => {
-          console.error('Error sending DM:', err);
-          alert('Error sending DM.');
-        });
-      }
-      inp.value = '';
-      loadChat();
-    };
+    // SHOW USER & ADMIN CONTROLS
+    document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
     document.getElementById('allUsersBtn').onclick = () => location.href = 'users.html';
 
@@ -640,8 +410,6 @@
         channels = ['public','GOD HIMSELF'];
       }
       renderChannels();
-      // Always load chat after channels are set
-      await loadChat();
     }
 
     function renderChannels(){
@@ -671,108 +439,9 @@
       });
     }
 
-    // Initial load: channels, then chat, then auto-refresh
-    await loadChannels();
-    setInterval(loadChat, 2000);
-
     // EMOJI / MOJICON
     document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','emoji');
     document.getElementById('mojiconBtn').onclick = () => toggleBoard('mojiconBoard','mojicon');
-    document.getElementById('customEmojiBtn').onclick = () => toggleBoard('customEmojiBoard','custom');
-
-    // Custom Emoji Board logic (same format)
-    function toggleBoard(id, cls) {
-      const b = document.getElementById(id);
-      b.style.display = b.style.display==='block'?'none':'block';
-      if (!b.hasChildNodes()) {
-        let list;
-        if (cls==='emoji') {
-          list = ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋'];
-        } else if (cls==='mojicon') {
-          list = [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
-             '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯'];
-        } else if (cls==='custom') {
-          const adminCommands = document.getElementById('admin-commands-list');
-          if (adminCommands && adminCommands.children.length > 0) {
-            list = Array.from(adminCommands.children).map(li => li.innerText);
-          } else {
-            list = ['/ban','/unban','/pause','/unpause','/clear','/off','/on','/warn [user] [reason]'];
-          }
-        }
-        list.forEach(sym => {
-          const s = document.createElement('span');
-          s.className = cls;
-          s.innerText = sym;
-          s.onclick = () => {
-            const inp = document.getElementById('message');
-            inp.value += sym;
-            inp.focus();
-          };
-          b.appendChild(s);
-        });
-      }
-    }
-
-    // Admin custom emoji editor logic
-    const customEmojiEditor = document.getElementById('customEmojiEditor');
-    const customEmojiBtn = document.getElementById('customEmojiBtn');
-  // ...existing code... (removed duplicate adminCommands declaration)
-    const customEmojiEdit = document.getElementById('custom-emoji-edit');
-    const saveCustomEmojiBtn = document.getElementById('saveCustomEmoji');
-    const closeCustomEmojiBtn = document.getElementById('closeCustomEmoji');
-    const xCustomEmojiBtn = document.getElementById('customEmojiEditorX');
-    // Only show editor for admins
-    if (localStorage.getItem('isAdmin') === 'true') {
-      customEmojiBtn.style.display = '';
-      customEmojiBtn.oncontextmenu = function(e) {
-        e.preventDefault();
-        customEmojiEditor.style.display = 'block';
-        // Load current custom emojis into textarea
-        const items = Array.from(customEmojiList.querySelectorAll('li')).map(li => li.innerText);
-        customEmojiEdit.value = items.join('\n');
-      };
-    }
-    if (closeCustomEmojiBtn) closeCustomEmojiBtn.onclick = () => customEmojiEditor.style.display = 'none';
-    if (xCustomEmojiBtn) xCustomEmojiBtn.onclick = () => customEmojiEditor.style.display = 'none';
-    if (saveCustomEmojiBtn) {
-      saveCustomEmojiBtn.onclick = function() {
-        const lines = customEmojiEdit.value.split('\n').filter(l => l.trim());
-        customEmojiList.innerHTML = '';
-        lines.forEach(line => {
-          customEmojiList.innerHTML += `<li>${line}</li>`;
-        });
-        customEmojiEditor.style.display = 'none';
-      };
-    }
-    // Admin Emoji Board logic
-    const adminEmojiBtn = document.getElementById('adminEmojiBtn');
-    const adminEmojiBoard = document.getElementById('adminEmojiBoard');
-    const saveAdminEmojiBtn = document.getElementById('saveAdminEmoji');
-    const closeAdminEmojiBtn = document.getElementById('closeAdminEmoji');
-    const editAdminEmojiArea = document.getElementById('admin-emoji-edit');
-    const adminEmojiList = document.getElementById('admin-emoji-list');
-    const xEmojiBtn = document.getElementById('adminEmojiX');
-    if (isAdmin && adminEmojiBtn) {
-      adminEmojiBtn.style.display = '';
-      adminEmojiBtn.onclick = function() {
-        adminEmojiBoard.style.display = 'block';
-        // Load current emojis into textarea
-        const items = Array.from(adminEmojiList.querySelectorAll('li')).map(li => li.innerText);
-        editAdminEmojiArea.value = items.join('\n');
-      };
-    }
-    if (closeAdminEmojiBtn) closeAdminEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
-    if (xEmojiBtn) xEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
-    if (saveAdminEmojiBtn) {
-      saveAdminEmojiBtn.onclick = function() {
-        const lines = editAdminEmojiArea.value.split('\n').filter(l => l.trim());
-        adminEmojiList.innerHTML = '';
-        lines.forEach(line => {
-          adminEmojiList.innerHTML += `<li>${line}</li>`;
-        });
-        adminEmojiBoard.style.display = 'none';
-      };
-    }
 
     function toggleBoard(id, cls) {
       const b = document.getElementById(id);
@@ -819,17 +488,103 @@
       box.innerHTML = '';
       let newest = lastRead[current]||0;
 
-      // Show login/logoff system message if present
-      if (current==='public') {
-        const sysMsg = localStorage.getItem('systemMessage');
-        if (sysMsg) {
-          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
-          localStorage.removeItem('systemMessage');
+      data.forEach(item=>{
+        // system messages
+        if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
+          box.innerHTML += `<div class="msg system">${item}</div>`;
+          return;
         }
+
+        let from,msg,ts;
+        if (current==='public') {
+          [from,msg] = item.split('>>');
+          ts = Date.now();
+        } else {
+          from = item.from;
+          msg  = item.message;
+          ts   = item.ts;
+        }
+
+        const isNew = ts > (lastRead[current]||0);
+        if (isNew && from!==user && optSound.checked) {
+          notifAudio.play();
+        }
+        if (isNew && from!==user) {
+          const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
+          if (chEl) chEl.querySelector('.unread-dot').style.display = 'block';
+        }
+        if (ts > newest) newest = ts;
+
+        const sender    = from.trim();
+        const userRanks = ranks[sender] || [];
+        const rankHtml  = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
+        let line = current==='public'
+          ? `<strong>${rankHtml} ${sender}</strong>: ${msg}`
+          : `<strong>${sender}</strong>: ${msg}`;
+
+        if (optTimestamp.checked) {
+          const t = new Date(ts).toLocaleTimeString();
+          line = `[${t}] ${line}`;
+        }
+
+        box.innerHTML += `<div class="msg">${line}</div>`;
+      });
+
+      lastRead[current] = newest;
+      localStorage.setItem('lastRead', JSON.stringify(lastRead));
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // SEND MESSAGE
+    document.getElementById('sendBtn').onclick = () => {
+      const inp = document.getElementById('message');
+      const txt = inp.value.trim();
+      if (!txt) return;
+
+      if (current==='public') {
+        if (isAdmin && txt.startsWith('/')) {
+          const [cmd,target,...rest] = txt.split(' ');
+          const ep = cmd.slice(1);
+          const body = ep==='warn'
+            ? { user: target, reason: rest.join(' ') }
+            : { user: target };
+          fetch(`${API}/${ep}`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(body)
+          });
+        } else {
+          fetch(`${API}/send`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({ user, message: txt })
+          });
+        }
+      } else {
+        fetch(`${API}/pm`, {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({ from: user, to: current, message: txt })
+        });
       }
 
-    // (Removed duplicate loadChat and sendBtn logic)
-  } // <-- closes async function
+      inp.value = '';
+      loadChat();
+    };
+
+    // ADMIN CONTROLS
+    document.getElementById('clearBtn').onclick   = ()=>{ fetch(`${API}/clear`,   {method:'POST'}); loadChat(); };
+    document.getElementById('pauseBtn').onclick   = ()=>{ fetch(`${API}/pause`,   {method:'POST'}); loadChat(); };
+    document.getElementById('unpauseBtn').onclick = ()=>{ fetch(`${API}/unpause`, {method:'POST'}); loadChat(); };
+    document.getElementById('offBtn').onclick     = ()=>{ fetch(`${API}/off`,     {method:'POST'}); loadChat(); };
+    document.getElementById('onBtn').onclick      = ()=>{ fetch(`${API}/on`,      {method:'POST'}); loadChat(); };
+    document.getElementById('statsBtn').onclick   = ()=>window.open('stats.html','_blank');
+
+    // INITIALIZE
+    await loadChannels();
+    await loadChat();
+    setInterval(loadChat, 2000);
+
   })();
   </script>
 </body>
