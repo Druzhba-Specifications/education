@@ -26,7 +26,7 @@
   <input type="password" id="password" placeholder="Password"><br>
   <button id="loginBtn">Login</button>
 
-  <!-- Roadmap UI -->
+  <!-- Roadmap UI (view only) -->
   <div id="roadmap-container" style="position: fixed; top: 50px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:999;">
     <h2 style="margin-top:0;">Roadmap</h2>
     <ul id="roadmap-list" style="list-style: none; padding: 0;">
@@ -36,8 +36,6 @@
       <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
     </ul>
     <h2 style="font-size:1em;">Any ideas? Message or DM Me! @GOD HIMSELF</h2>
-    <textarea id="roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
-    <button id="saveRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
   </div>
 
   <script>
@@ -95,16 +93,7 @@
       }
     }
 
-    // Roadmap edit/save functionality
-    document.getElementById('saveRoadmap').onclick = function() {
-      const text = document.getElementById('roadmap-edit').value;
-      const lines = text.split('\n').filter(l => l.trim());
-      const ul = document.getElementById('roadmap-list');
-      ul.innerHTML = '';
-      lines.forEach(line => {
-        ul.innerHTML += `<li>${line}</li>`;
-      });
-    };
+    // Roadmap edit/save functionality removed for public view
   </script>
 </body>
 </html>

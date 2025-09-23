@@ -263,6 +263,20 @@
       <button id="sendBtn">Send</button>
       <button id="emojiBtn">😀</button>
       <button id="mojiconBtn">(◐ω◑)</button>
+      <button id="adminRoadmapBtn" style="display:none;">🗺️ Roadmap</button>
+    </div>
+    <!-- Admin Roadmap Board (hidden by default) -->
+    <div id="adminRoadmapBoard" style="display:none; position: fixed; top: 100px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
+      <h2 style="margin-top:0;">Edit Roadmap</h2>
+      <ul id="admin-roadmap-list" style="list-style: none; padding: 0;">
+        <li><strong>Add Threads/Replies and Roadmap Table:</strong>Done!</li>
+        <li><strong>Private DMs for all, not just GOD HIMSELF for support:</strong>Not Started</li>
+        <li><strong>Polls</strong>Not Started</li>
+        <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
+      </ul>
+      <textarea id="admin-roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
+      <button id="saveAdminRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
+      <button id="closeAdminRoadmap" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
     </div>
 
     <div id="emojiBoard"></div>
@@ -277,19 +291,7 @@
       <button id="statsBtn">Stats</button>
     </div>
 
-    <!-- Roadmap UI -->
-    <div id="roadmap-container" style="position: fixed; top: 50px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:999;">
-        <h2 style="margin-top:0;">Roadmap</h2>
-        <ul id="roadmap-list" style="list-style: none; padding: 0;">
-            <li><strong>Add Threads/Replies and Roadmap Table:</strong>Done!</li>
-            <li><strong>Private DMs for all, not just GOD HIMSELF for support:</strong>Not Started</li>
-            <li><strong>Polls</strong>Not Started</li>
-            <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
-        </ul>
-        <h2 style="font-size:1em;">Any ideas? Message or DM Me! @GOD HIMSELF</h2>
-        <textarea id="roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
-        <button id="saveRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
-    </div>
+  <!-- Roadmap UI removed for public chat -->
 
   <!-- SETTINGS POPUP -->
   <div id="settingsModal">
@@ -336,21 +338,7 @@
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
-  // Roadmap edit/save functionality
-  document.addEventListener('DOMContentLoaded', function() {
-    const saveBtn = document.getElementById('saveRoadmap');
-    if (saveBtn) {
-      saveBtn.onclick = function() {
-        const text = document.getElementById('roadmap-edit').value;
-        const lines = text.split('\n').filter(l => l.trim());
-        const ul = document.getElementById('roadmap-list');
-        ul.innerHTML = '';
-        lines.forEach(line => {
-          ul.innerHTML += `<li>${line}</li>`;
-        });
-      };
-    }
-  });
+  // Roadmap edit/save functionality removed for public chat
 
   (async function(){
     const API     = 'https://chat-backend-pdzh.onrender.com';
@@ -471,6 +459,33 @@
     // EMOJI / MOJICON
     document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','emoji');
     document.getElementById('mojiconBtn').onclick = () => toggleBoard('mojiconBoard','mojicon');
+    // Admin Roadmap Board logic
+    const adminBtn = document.getElementById('adminRoadmapBtn');
+    const adminBoard = document.getElementById('adminRoadmapBoard');
+    const saveAdminBtn = document.getElementById('saveAdminRoadmap');
+    const closeAdminBtn = document.getElementById('closeAdminRoadmap');
+    const editAdminArea = document.getElementById('admin-roadmap-edit');
+    const adminList = document.getElementById('admin-roadmap-list');
+    if (isAdmin && adminBtn) {
+      adminBtn.style.display = '';
+      adminBtn.onclick = function() {
+        adminBoard.style.display = 'block';
+        // Load current roadmap into textarea
+        const items = Array.from(adminList.querySelectorAll('li')).map(li => li.innerText);
+        editAdminArea.value = items.join('\n');
+      };
+    }
+    if (closeAdminBtn) closeAdminBtn.onclick = () => adminBoard.style.display = 'none';
+    if (saveAdminBtn) {
+      saveAdminBtn.onclick = function() {
+        const lines = editAdminArea.value.split('\n').filter(l => l.trim());
+        adminList.innerHTML = '';
+        lines.forEach(line => {
+          adminList.innerHTML += `<li>${line}</li>`;
+        });
+        adminBoard.style.display = 'none';
+      };
+    }
 
     function toggleBoard(id, cls) {
       const b = document.getElementById(id);
