@@ -366,7 +366,8 @@
   // Roadmap edit/save functionality removed for public chat
 
   (async function(){
-  const API     = 'https://chat-backend-pdzh.onrender.com';
+  // CHANGE THIS TO YOUR SERVER URL!
+  const API     = 'http://localhost:3000';
   const user    = localStorage.getItem('chatUser');
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
   if (!user) return location.href = 'index.html';
@@ -409,19 +410,32 @@
     async function loadChat() {
       const box = document.getElementById('chatBox');
       let data;
-      if (current==='public') {
-        data = await fetch(`${API}/log`).then(r=>r.json());
-      } else {
-        data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
-                 .then(r=>r.json());
+      try {
+        if (current==='public') {
+          data = await fetch(`${API}/log`).then(r=>r.json());
+        } else {
+          data = await fetch(`${API}/pm/${encodeURIComponent(user)}/${encodeURIComponent(current)}`)
+                   .then(r=>r.json());
+        }
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        box.innerHTML = '<div class="msg system">Error loading messages.</div>';
+        return;
       }
 
       // ...existing code for ranks, banned, status...
-      const [ranks,banned,status] = await Promise.all([
-        fetch(`${API}/ranks.json`).then(r=>r.json()),
-        fetch(`${API}/blacklist.json`).then(r=>r.json()),
-        fetch(`${API}/status`).then(r=>r.json())
-      ]);
+      let ranks = {}, banned = [], status = {};
+      try {
+        [ranks, banned, status] = await Promise.all([
+          fetch(`${API}/ranks.json`).then(r=>r.json()),
+          fetch(`${API}/blacklist.json`).then(r=>r.json()),
+          fetch(`${API}/status`).then(r=>r.json())
+        ]);
+      } catch (err) {
+        console.error('Error fetching ranks/banned/status:', err);
+        box.innerHTML = '<div class="msg system">Error loading chat metadata.</div>';
+        return;
+      }
 
       if (status.off && user!=='GOD HIMSELF') return location.href='off.html';
       if (banned.includes(user))    return location.href='index.html';
@@ -524,12 +538,18 @@
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify(body)
+          }).catch(err => {
+            console.error('Error sending admin command:', err);
+            alert('Error sending admin command.');
           });
         } else {
           fetch(`${API}/send`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body:JSON.stringify({ user, message: txt })
+          }).catch(err => {
+            console.error('Error sending message:', err);
+            alert('Error sending message.');
           });
         }
       } else {
@@ -537,6 +557,9 @@
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({ from: user, to: current, message: txt })
+        }).catch(err => {
+          console.error('Error sending DM:', err);
+          alert('Error sending DM.');
         });
       }
       inp.value = '';
