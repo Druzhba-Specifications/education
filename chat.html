@@ -250,7 +250,7 @@
   </div>
 
   <!-- MAIN AREA -->
-  <div id="main">
+  <div id="main" style="position:relative;">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
@@ -276,7 +276,20 @@
       <button id="onBtn">On</button>
       <button id="statsBtn">Stats</button>
     </div>
-  </div>
+
+    <!-- Roadmap UI -->
+    <div id="roadmap-container" style="position: fixed; top: 50px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:999;">
+        <h2 style="margin-top:0;">Roadmap</h2>
+        <ul id="roadmap-list" style="list-style: none; padding: 0;">
+            <li><strong>Add Threads/Replies and Roadmap Table:</strong>Done!</li>
+            <li><strong>Private DMs for all, not just GOD HIMSELF for support:</strong>Not Started</li>
+            <li><strong>Polls</strong>Not Started</li>
+            <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
+        </ul>
+        <h2 style="font-size:1em;">Any ideas? Message or DM Me! @GOD HIMSELF</h2>
+        <textarea id="roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
+        <button id="saveRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
+    </div>
 
   <!-- SETTINGS POPUP -->
   <div id="settingsModal">
@@ -323,6 +336,22 @@
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
+  // Roadmap edit/save functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const saveBtn = document.getElementById('saveRoadmap');
+    if (saveBtn) {
+      saveBtn.onclick = function() {
+        const text = document.getElementById('roadmap-edit').value;
+        const lines = text.split('\n').filter(l => l.trim());
+        const ul = document.getElementById('roadmap-list');
+        ul.innerHTML = '';
+        lines.forEach(line => {
+          ul.innerHTML += `<li>${line}</li>`;
+        });
+      };
+    }
+  });
+
   (async function(){
     const API     = 'https://chat-backend-pdzh.onrender.com';
     const user    = localStorage.getItem('chatUser');
@@ -487,6 +516,15 @@
 
       box.innerHTML = '';
       let newest = lastRead[current]||0;
+
+      // Show login/logoff system message if present
+      if (current==='public') {
+        const sysMsg = localStorage.getItem('systemMessage');
+        if (sysMsg) {
+          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
+          localStorage.removeItem('systemMessage');
+        }
+      }
 
       data.forEach(item=>{
         // system messages

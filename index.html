@@ -24,10 +24,33 @@
   <h2>🔐 Chat Login</h2>
   <input type="text" id="username" placeholder="Username"><br>
   <input type="password" id="password" placeholder="Password"><br>
-  <button onclick="login()">Login</button>
+  <button id="loginBtn">Login</button>
+
+  <!-- Roadmap UI -->
+  <div id="roadmap-container" style="position: fixed; top: 50px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:999;">
+    <h2 style="margin-top:0;">Roadmap</h2>
+    <ul id="roadmap-list" style="list-style: none; padding: 0;">
+      <li><strong>Add Threads/Replies and Roadmap Table:</strong>Done!</li>
+      <li><strong>Private DMs for all, not just GOD HIMSELF for support:</strong>Not Started</li>
+      <li><strong>Polls</strong>Not Started</li>
+      <li><strong>Live Typing Feed (ex. GOD HIMSELF is typing...)</strong>Not Started</li>
+    </ul>
+    <h2 style="font-size:1em;">Any ideas? Message or DM Me! @GOD HIMSELF</h2>
+    <textarea id="roadmap-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Edit roadmap steps here, one per line..."></textarea>
+    <button id="saveRoadmap" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Roadmap</button>
+  </div>
 
   <script>
     const backend = 'https://chat-backend-pdzh.onrender.com';
+
+    // Make login button instant and responsive
+    document.getElementById('loginBtn').addEventListener('click', login);
+    document.getElementById('username').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
+    document.getElementById('password').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') login();
+    });
 
     async function login() {
       const username = document.getElementById('username').value.trim();
@@ -38,26 +61,50 @@
         return;
       }
 
-      const res = await fetch(`${backend}/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      // Disable button to prevent double clicks
+      const btn = document.getElementById('loginBtn');
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
 
-      const result = await res.json();
+      try {
+        const res = await fetch(`${backend}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const result = await res.json();
 
-      if (result.success) {
-        localStorage.setItem('chatUser', username);
-        localStorage.setItem('isAdmin', result.isAdmin);
-        if (result.redirect) {
-          location.href = result.redirect;
+        if (result.success) {
+          localStorage.setItem('chatUser', username);
+          localStorage.setItem('isAdmin', result.isAdmin);
+          // System message for login (to be handled in chat.html)
+          localStorage.setItem('systemMessage', `${username} logged in.`);
+          if (result.redirect) {
+            location.href = result.redirect;
+          } else {
+            location.href = 'chat.html';
+          }
         } else {
-          location.href = 'chat.html';
+          alert('❌ Invalid username or password.');
         }
-      } else {
-        alert('❌ Invalid username or password.');
+      } catch (err) {
+        alert('Login failed. Please try again.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Login';
       }
     }
+
+    // Roadmap edit/save functionality
+    document.getElementById('saveRoadmap').onclick = function() {
+      const text = document.getElementById('roadmap-edit').value;
+      const lines = text.split('\n').filter(l => l.trim());
+      const ul = document.getElementById('roadmap-list');
+      ul.innerHTML = '';
+      lines.forEach(line => {
+        ul.innerHTML += `<li>${line}</li>`;
+      });
+    };
   </script>
 </body>
 </html>
