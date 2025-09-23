@@ -366,10 +366,11 @@
   // Roadmap edit/save functionality removed for public chat
 
   (async function(){
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const user    = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!user) return location.href = 'index.html';
+  const API     = 'https://chat-backend-pdzh.onrender.com';
+  const user    = localStorage.getItem('chatUser');
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+  if (!user) return location.href = 'index.html';
+  document.getElementById('username').innerText = user;
 
     // THREADS/REPLIES UI LOGIC
     // Admin-only actions
@@ -782,103 +783,8 @@
         }
       }
 
-      data.forEach(item=>{
-        // system messages
-        if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
-          box.innerHTML += `<div class="msg system">${item}</div>`;
-          return;
-        }
-
-        let from,msg,ts;
-        if (current==='public') {
-          [from,msg] = item.split('>>');
-          ts = Date.now();
-        } else {
-          from = item.from;
-          msg  = item.message;
-          ts   = item.ts;
-        }
-
-        const isNew = ts > (lastRead[current]||0);
-        if (isNew && from!==user && optSound.checked) {
-          notifAudio.play();
-        }
-        if (isNew && from!==user) {
-          const chEl = document.querySelector(`.channel[data-ch="${current}"]`);
-          if (chEl) chEl.querySelector('.unread-dot').style.display = 'block';
-        }
-        if (ts > newest) newest = ts;
-
-        const sender    = from.trim();
-        const userRanks = ranks[sender] || [];
-        const rankHtml  = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
-        let line = current==='public'
-          ? `<strong>${rankHtml} ${sender}</strong>: ${msg}`
-          : `<strong>${sender}</strong>: ${msg}`;
-
-        if (optTimestamp.checked) {
-          const t = new Date(ts).toLocaleTimeString();
-          line = `[${t}] ${line}`;
-        }
-
-        box.innerHTML += `<div class="msg">${line}</div>`;
-      });
-
-      lastRead[current] = newest;
-      localStorage.setItem('lastRead', JSON.stringify(lastRead));
-      box.scrollTop = box.scrollHeight;
-    }
-
-    // SEND MESSAGE
-    document.getElementById('sendBtn').onclick = () => {
-      const inp = document.getElementById('message');
-      const txt = inp.value.trim();
-      if (!txt) return;
-
-      if (current==='public') {
-        if (isAdmin && txt.startsWith('/')) {
-          const [cmd,target,...rest] = txt.split(' ');
-          const ep = cmd.slice(1);
-          const body = ep==='warn'
-            ? { user: target, reason: rest.join(' ') }
-            : { user: target };
-          fetch(`${API}/${ep}`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(body)
-          });
-        } else {
-          fetch(`${API}/send`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ user, message: txt })
-          });
-        }
-      } else {
-        fetch(`${API}/pm`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ from: user, to: current, message: txt })
-        });
-      }
-
-      inp.value = '';
-      loadChat();
-    };
-
-    // ADMIN CONTROLS
-    document.getElementById('clearBtn').onclick   = ()=>{ fetch(`${API}/clear`,   {method:'POST'}); loadChat(); };
-    document.getElementById('pauseBtn').onclick   = ()=>{ fetch(`${API}/pause`,   {method:'POST'}); loadChat(); };
-    document.getElementById('unpauseBtn').onclick = ()=>{ fetch(`${API}/unpause`, {method:'POST'}); loadChat(); };
-    document.getElementById('offBtn').onclick     = ()=>{ fetch(`${API}/off`,     {method:'POST'}); loadChat(); };
-    document.getElementById('onBtn').onclick      = ()=>{ fetch(`${API}/on`,      {method:'POST'}); loadChat(); };
-    document.getElementById('statsBtn').onclick   = ()=>window.open('stats.html','_blank');
-
-    // INITIALIZE
-    await loadChannels();
-    await loadChat();
-    setInterval(loadChat, 2000);
-
+    // (Removed duplicate loadChat and sendBtn logic)
+  } // <-- closes async function
   })();
   </script>
 </body>
