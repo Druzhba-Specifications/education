@@ -250,11 +250,28 @@
   </div>
 
   <!-- MAIN AREA -->
-  <div id="main">
+    <div id="main" style="position:relative;">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <button id="allUsersBtn">All Users</button>
+      <span id="adminActions" style="display:none;">
+        <button id="showBannedBtn">Show Banned</button>
+        <button id="helpBtn">Help</button>
+      </span>
     </div>
+
+    <!-- THREADS UI -->
+    <div id="threadsPanel" style="margin-bottom:20px; background:#f9f9f9; border-radius:8px; padding:10px;">
+      <h3>Threads</h3>
+      <div id="threadList"></div>
+      <form id="newThreadForm" style="margin-top:10px;">
+        <input type="text" id="threadTitle" placeholder="Thread title" required style="width:40%;">
+        <input type="text" id="threadText" placeholder="First message" required style="width:40%;">
+        <button type="submit">Create Thread</button>
+      </form>
+    </div>
+
+    <div id="threadView" style="display:none; background:#fff; border-radius:8px; box-shadow:0 2px 8px #0001; padding:10px; margin-bottom:20px;"></div>
 
     <div id="chatBox"></div>
 
@@ -263,10 +280,40 @@
       <button id="sendBtn">Send</button>
       <button id="emojiBtn">😀</button>
       <button id="mojiconBtn">(◐ω◑)</button>
+      <button id="customEmojiBtn">🆕</button>
+    </div>
+    <!-- Admin Emoji Board (hidden by default) -->
+    <div id="adminEmojiBoard" style="display:none; position: fixed; top: 100px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
+      <button id="adminEmojiX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
+      <h2 style="margin-top:0;">Add New Emojis</h2>
+      <ul id="admin-emoji-list" style="list-style: none; padding: 0;">
+        <li>😀</li>
+        <li>🔥</li>
+        <li>💯</li>
+        <li>Placeholder Emoji</li>
+      </ul>
+      <textarea id="admin-emoji-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Add emojis here, one per line..."></textarea>
+      <button id="saveAdminEmoji" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Emojis</button>
+      <button id="closeAdminEmoji" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
     </div>
 
     <div id="emojiBoard"></div>
     <div id="mojiconBoard"></div>
+    <div id="customEmojiBoard" style="display:none; margin-bottom:10px;"></div>
+    <!-- Admin custom emoji editor -->
+    <div id="customEmojiEditor" style="display:none; position: fixed; top: 120px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
+      <button id="customEmojiEditorX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
+      <h2 style="margin-top:0;">Edit Custom Emojis</h2>
+      <ul id="adminCommands" style="list-style: none; padding: 0;">
+        <li>😺</li>
+        <li>🦄</li>
+        <li>🍕</li>
+        <li>Placeholder Emoji</li>
+      </ul>
+      <textarea id="custom-emoji-edit" style="width:100%;height:80px;margin-top:10px;" placeholder="Add custom emojis here, one per line..."></textarea>
+      <button id="saveCustomEmoji" style="margin-top:10px;width:100%;background:#007bff;color:#fff;border:none;padding:8px;border-radius:4px;cursor:pointer;">Save Custom Emojis</button>
+      <button id="closeCustomEmoji" style="margin-top:10px;width:100%;background:#ccc;color:#000;border:none;padding:8px;border-radius:4px;cursor:pointer;">Close</button>
+    </div>
 
     <div id="adminControls">
       <button id="clearBtn">Clear</button>
@@ -276,7 +323,8 @@
       <button id="onBtn">On</button>
       <button id="statsBtn">Stats</button>
     </div>
-  </div>
+
+  <!-- Roadmap UI removed for public chat -->
 
   <!-- SETTINGS POPUP -->
   <div id="settingsModal">
@@ -323,11 +371,96 @@
   <audio id="notifAudio" src="assets/notify.mp3" preload="auto"></audio>
 
   <script>
-  (async function(){
-    const API     = 'https://chat-backend-pdzh.onrender.com';
-    const user    = localStorage.getItem('chatUser');
-    const isAdmin = localStorage.getItem('isAdmin') === 'true';
-    if (!user) return location.href = 'index.html';
+  // Roadmap edit/save functionality removed for public chat
+
+  // THREADS/REPLIES UI LOGIC
+  const API = 'https://chat-backend-pdzh.onrender.com';
+  const user = localStorage.getItem('chatUser');
+  const isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+  // Admin-only actions
+  const adminActions = document.getElementById('adminActions');
+  if (isAdmin) adminActions.style.display = '';
+  document.getElementById('showBannedBtn').onclick = async () => {
+    const res = await fetch(`${API}/showbanned?admin=${user}`);
+    if (res.ok) alert('Banned: ' + (await res.json()).join(', '));
+    else alert('Forbidden');
+  };
+  document.getElementById('helpBtn').onclick = async () => {
+    const res = await fetch(`${API}/help?admin=${user}`);
+    if (res.ok) alert(JSON.stringify(await res.json(), null, 2));
+    else alert('Forbidden');
+  };
+
+  // THREADS UI
+  const threadListDiv = document.getElementById('threadList');
+  const threadViewDiv = document.getElementById('threadView');
+  const newThreadForm = document.getElementById('newThreadForm');
+
+  async function loadThreads() {
+    const res = await fetch(`${API}/threads`);
+    const threads = await res.json();
+    threadListDiv.innerHTML = '';
+    threads.forEach(t => {
+      const btn = document.createElement('button');
+      btn.textContent = `${t.title} (${t.messageCount})`;
+      btn.onclick = () => showThread(t.id, t.title);
+      threadListDiv.appendChild(btn);
+    });
+  }
+
+  async function showThread(threadId, threadTitle) {
+    const res = await fetch(`${API}/threads/${threadId}`);
+    const messages = await res.json();
+    threadViewDiv.style.display = 'block';
+    threadViewDiv.innerHTML = `<h4>${threadTitle}</h4>`;
+    // Render messages and replies (flat, with parentId)
+    messages.forEach(msg => {
+      const replyBtn = `<button data-msgid="${msg.id}" class="replyBtn">Reply</button>`;
+      threadViewDiv.innerHTML += `<div style="margin-bottom:8px; border-bottom:1px solid #eee; padding-bottom:4px;"><strong>${msg.user}</strong>: ${msg.text} ${replyBtn}</div>`;
+    });
+    // Reply form
+    threadViewDiv.innerHTML += `<form id="replyForm" style="margin-top:10px;"><input type="text" id="replyText" placeholder="Reply..." required style="width:70%;"><input type="hidden" id="replyParentId"><button type="submit">Send Reply</button></form><button id="closeThreadView" style="margin-top:10px;">Close</button>`;
+
+    // Reply button logic
+    threadViewDiv.querySelectorAll('.replyBtn').forEach(btn => {
+      btn.onclick = () => {
+        document.getElementById('replyParentId').value = btn.getAttribute('data-msgid');
+        document.getElementById('replyText').focus();
+      };
+    });
+    document.getElementById('closeThreadView').onclick = () => {
+      threadViewDiv.style.display = 'none';
+    };
+    document.getElementById('replyForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('replyText').value;
+      const parentId = document.getElementById('replyParentId').value || null;
+      await fetch(`${API}/threads/${threadId}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, text, parentId })
+      });
+      showThread(threadId, threadTitle);
+    };
+  }
+
+  newThreadForm.onsubmit = async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('threadTitle').value;
+    const text = document.getElementById('threadText').value;
+    await fetch(`${API}/threads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, creator: user, text })
+    });
+    newThreadForm.reset();
+    loadThreads();
+  };
+
+  loadThreads();
+  // ...existing code...
+  if (!user) return location.href = 'index.html';
 
     // ELEMENTS
     const sidebar    = document.getElementById('sidebar');
@@ -442,6 +575,101 @@
     // EMOJI / MOJICON
     document.getElementById('emojiBtn').onclick   = () => toggleBoard('emojiBoard','emoji');
     document.getElementById('mojiconBtn').onclick = () => toggleBoard('mojiconBoard','mojicon');
+    document.getElementById('customEmojiBtn').onclick = () => toggleBoard('customEmojiBoard','custom');
+
+    // Custom Emoji Board logic (same format)
+    function toggleBoard(id, cls) {
+      const b = document.getElementById(id);
+      b.style.display = b.style.display==='block'?'none':'block';
+      if (!b.hasChildNodes()) {
+        let list;
+        if (cls==='emoji') {
+          list = ['😀','😂','😎','😍','😢','😡','👍','👎','🔥','💯','🎉','🤖','🧠','🚀','❤️','🥚','☝️','🤓','🧏','🤫','👋'];
+        } else if (cls==='mojicon') {
+          list = [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
+             '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯'];
+        } else if (cls==='custom') {
+          const adminCommands = document.getElementById('admin-commands-list');
+          if (adminCommands && adminCommands.children.length > 0) {
+            list = Array.from(adminCommands.children).map(li => li.innerText);
+          } else {
+            list = ['/ban','/unban','/pause','/unpause','/clear','/off','/on','/warn [user] [reason]'];
+          }
+        }
+        list.forEach(sym => {
+          const s = document.createElement('span');
+          s.className = cls;
+          s.innerText = sym;
+          s.onclick = () => {
+            const inp = document.getElementById('message');
+            inp.value += sym;
+            inp.focus();
+          };
+          b.appendChild(s);
+        });
+      }
+    }
+
+    // Admin custom emoji editor logic
+    const customEmojiEditor = document.getElementById('customEmojiEditor');
+    const customEmojiBtn = document.getElementById('customEmojiBtn');
+    const adminCommands = document.getElementById('adminCommands');
+    const customEmojiEdit = document.getElementById('custom-emoji-edit');
+    const saveCustomEmojiBtn = document.getElementById('saveCustomEmoji');
+    const closeCustomEmojiBtn = document.getElementById('closeCustomEmoji');
+    const xCustomEmojiBtn = document.getElementById('customEmojiEditorX');
+    // Only show editor for admins
+    if (localStorage.getItem('isAdmin') === 'true') {
+      customEmojiBtn.style.display = '';
+      customEmojiBtn.oncontextmenu = function(e) {
+        e.preventDefault();
+        customEmojiEditor.style.display = 'block';
+        // Load current custom emojis into textarea
+        const items = Array.from(customEmojiList.querySelectorAll('li')).map(li => li.innerText);
+        customEmojiEdit.value = items.join('\n');
+      };
+    }
+    if (closeCustomEmojiBtn) closeCustomEmojiBtn.onclick = () => customEmojiEditor.style.display = 'none';
+    if (xCustomEmojiBtn) xCustomEmojiBtn.onclick = () => customEmojiEditor.style.display = 'none';
+    if (saveCustomEmojiBtn) {
+      saveCustomEmojiBtn.onclick = function() {
+        const lines = customEmojiEdit.value.split('\n').filter(l => l.trim());
+        customEmojiList.innerHTML = '';
+        lines.forEach(line => {
+          customEmojiList.innerHTML += `<li>${line}</li>`;
+        });
+        customEmojiEditor.style.display = 'none';
+      };
+    }
+    // Admin Emoji Board logic
+    const adminEmojiBtn = document.getElementById('adminEmojiBtn');
+    const adminEmojiBoard = document.getElementById('adminEmojiBoard');
+    const saveAdminEmojiBtn = document.getElementById('saveAdminEmoji');
+    const closeAdminEmojiBtn = document.getElementById('closeAdminEmoji');
+    const editAdminEmojiArea = document.getElementById('admin-emoji-edit');
+    const adminEmojiList = document.getElementById('admin-emoji-list');
+    const xEmojiBtn = document.getElementById('adminEmojiX');
+    if (isAdmin && adminEmojiBtn) {
+      adminEmojiBtn.style.display = '';
+      adminEmojiBtn.onclick = function() {
+        adminEmojiBoard.style.display = 'block';
+        // Load current emojis into textarea
+        const items = Array.from(adminEmojiList.querySelectorAll('li')).map(li => li.innerText);
+        editAdminEmojiArea.value = items.join('\n');
+      };
+    }
+    if (closeAdminEmojiBtn) closeAdminEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
+    if (xEmojiBtn) xEmojiBtn.onclick = () => adminEmojiBoard.style.display = 'none';
+    if (saveAdminEmojiBtn) {
+      saveAdminEmojiBtn.onclick = function() {
+        const lines = editAdminEmojiArea.value.split('\n').filter(l => l.trim());
+        adminEmojiList.innerHTML = '';
+        lines.forEach(line => {
+          adminEmojiList.innerHTML += `<li>${line}</li>`;
+        });
+        adminEmojiBoard.style.display = 'none';
+      };
+    }
 
     function toggleBoard(id, cls) {
       const b = document.getElementById(id);
@@ -487,6 +715,15 @@
 
       box.innerHTML = '';
       let newest = lastRead[current]||0;
+
+      // Show login/logoff system message if present
+      if (current==='public') {
+        const sysMsg = localStorage.getItem('systemMessage');
+        if (sysMsg) {
+          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
+          localStorage.removeItem('systemMessage');
+        }
+      }
 
       data.forEach(item=>{
         // system messages
