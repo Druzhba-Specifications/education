@@ -287,7 +287,7 @@
     <div id="customEmojiEditor" style="display:none; position: fixed; top: 120px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:1000;">
       <button id="customEmojiEditorX" style="position:absolute;top:8px;right:8px;background:none;border:none;font-size:1.2em;cursor:pointer;">&times;</button>
       <h2 style="margin-top:0;">Edit Custom Emojis</h2>
-      <ul id="custom-emoji-list" style="list-style: none; padding: 0;">
+      <ul id="adminCommands" style="list-style: none; padding: 0;">
         <li>😺</li>
         <li>🦄</li>
         <li>🍕</li>
@@ -489,11 +489,11 @@
           list = [':D','(づ ◕‿◕ )づ','( •_•)>⌐■-■','(•‿•)',':)',':(',':`(',';)', 'XD',
              '(◐ω◑)','（ΦωΦ）','(●´⌓`●)','(ᗒᗣᗕ)՞','(o・┏ω┓・o)','¯\\_(ツ)_/¯'];
         } else if (cls==='custom') {
-          const customEmojiList = document.getElementById('custom-emoji-list');
-          if (customEmojiList && customEmojiList.children.length > 0) {
-            list = Array.from(customEmojiList.children).map(li => li.innerText);
+          const adminCommands = document.getElementById('admin-commands-list');
+          if (adminCommands && adminCommands.children.length > 0) {
+            list = Array.from(adminCommands.children).map(li => li.innerText);
           } else {
-            list = ['😺','🦄','🍕','Placeholder Emoji'];
+            list = ['/ban','/unban','/pause','/unpause','/clear','/off','/on','/warn [user] [reason]'];
           }
         }
         list.forEach(sym => {
@@ -513,7 +513,7 @@
     // Admin custom emoji editor logic
     const customEmojiEditor = document.getElementById('customEmojiEditor');
     const customEmojiBtn = document.getElementById('customEmojiBtn');
-    const customEmojiList = document.getElementById('custom-emoji-list');
+    const adminCommands = document.getElementById('adminCommands');
     const customEmojiEdit = document.getElementById('custom-emoji-edit');
     const saveCustomEmojiBtn = document.getElementById('saveCustomEmoji');
     const closeCustomEmojiBtn = document.getElementById('closeCustomEmoji');
