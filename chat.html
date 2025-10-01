@@ -267,11 +267,12 @@
     }
 
     /* THREADS SIDEBAR (right) */
+    /* Right-side stacked sidebars */
     #threadsSidebar {
       position: fixed;
       top: 0;
       right: 0;
-      height: 100vh;
+      height: 50vh; /* top half */
       width: 320px;
       background: #f9f9f9;
       border-left: 1px solid #ddd;
@@ -281,16 +282,14 @@
       transform: translateX(0);
       transition: transform 0.25s ease;
       z-index: 1500;
-      right: 0;
     }
-    /* collapsed: move completely off-screen */
     #threadsSidebar.collapsed { transform: translateX(100%); pointer-events: none; }
     #threadsToggle {
       position: absolute;
-      left: -40px; /* tuck toggle closer to the right edge when collapsed */
+      left: -40px;
       top: 12px;
       width: 40px;
-      background: #007bff;
+      background: #28a745; /* green same as users */
       color: #fff;
       border-radius: 6px 0 0 6px;
       height: 36px;
@@ -309,29 +308,28 @@
     /* USERS SIDEBAR */
     #usersSidebar {
       position: fixed;
-      top: 0;
-      left: 0; /* left side drawer */
-      height: 100vh;
-      width: 260px;
+      bottom: 0;
+      right: 0;
+      height: 50vh; /* bottom half */
+      width: 320px;
       background: #f9f9f9;
-      border-right: 1px solid #ddd;
-      box-shadow: 2px 0 6px rgba(0,0,0,0.04);
+      border-left: 1px solid #ddd;
+      box-shadow: -2px 0 6px rgba(0,0,0,0.04);
       padding: 10px;
       box-sizing: border-box;
       transform: translateX(0);
       transition: transform 0.25s ease;
       z-index: 1500;
     }
-    /* collapsed: move completely off-screen to the left */
-    #usersSidebar.collapsed { transform: translateX(-110%); pointer-events: none; }
+    #usersSidebar.collapsed { transform: translateX(100%); pointer-events: none; }
     #usersToggle {
       position: absolute;
-      right: -40px; /* toggle sits outside the left panel at the very edge */
+      left: -40px;
       top: 12px;
       width: 40px;
-      background: #28a745;
+      background: #28a745; /* green */
       color: #fff;
-      border-radius: 0 6px 6px 0;
+      border-radius: 6px 0 0 6px;
       height: 36px;
       display: flex;
       align-items: center;
@@ -441,21 +439,17 @@
       <button id="statsBtn">Stats</button>
     </div>
 
-  <!-- Threads sidebar (right) -->
+  <!-- Right sidebars: Threads (top) and Users (below) -->
   <div id="threadsSidebar" class="collapsed">
     <div id="threadsToggle">Threads</div>
     <h3 style="margin:6px 0 6px 0;">Threads</h3>
     <div id="threadsList">Loading…</div>
   </div>
 
-  <!-- Users sidebar (right) -->
   <div id="usersSidebar" class="collapsed">
     <div id="usersToggle">Users</div>
     <h3 style="margin:6px 0 6px 0;">Online Users</h3>
     <div id="usersList">Loading…</div>
-    <div style="position:absolute;bottom:12px;left:12px;right:12px;">
-      <button id="allUsersLink" style="width:100%;">All Users</button>
-    </div>
   </div>
 
   <!-- Roadmap UI removed for public chat -->
@@ -1086,7 +1080,7 @@
           el.innerText = 'Error loading users';
         }
       }
-      document.getElementById('allUsersLink').onclick = () => location.href = 'users.html';
+  // All Users button removed; Users sidebar toggled via green cutout
       // initial users load and periodic refresh
       loadUsersSidebar();
       setInterval(loadUsersSidebar, 7000);
