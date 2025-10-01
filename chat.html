@@ -303,6 +303,41 @@
     .thread-item:hover { background: #fff; }
     .thread-title { font-weight: bold; font-size: 13px; }
     .thread-meta { font-size: 12px; color: #666; }
+    /* USERS SIDEBAR */
+    #usersSidebar {
+      position: fixed;
+      top: 0;
+      right: 320px; /* sit left of threads by default */
+      height: 100vh;
+      width: 260px;
+      background: #f9f9f9;
+      border-left: 1px solid #ddd;
+      box-shadow: -2px 0 6px rgba(0,0,0,0.04);
+      padding: 10px;
+      box-sizing: border-box;
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+      z-index: 1500;
+    }
+    #usersSidebar.collapsed { transform: translateX(100%); }
+    #usersToggle {
+      position: absolute;
+      left: -56px;
+      top: 12px;
+      width: 56px;
+      background: #28a745;
+      color: #fff;
+      border-radius: 6px 0 0 6px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #usersList { overflow-y: auto; max-height: calc(100vh - 120px); padding-top: 40px; }
+    .user-item { padding: 8px 6px; border-bottom: 1px solid #eee; display:flex; align-items:center; gap:8px; }
+    .status-dot { width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px; }
   </style>
 </head>
 <body>
@@ -979,10 +1014,24 @@
           el.innerHTML = '';
           data.forEach(u => {
             const item = document.createElement('div');
-            item.className = 'thread-item';
+            item.className = 'user-item';
             const avatar = u.profilePic || u.avatar || u.img || '';
             const img = `<img src="${avatar?('assets/'+avatar):'assets/placeholder.png'}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">`;
-            item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;">${img}<div><strong>${u.username}</strong><div style=\"font-size:11px;color:#666;\">${u.status||''}</div></div></div></div>`;
+            const online = !!u.online;
+            const dotColor = online ? '#28a745' : '#cccccc';
+            const statusText = online ? 'Online' : 'Offline';
+            item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;">
+                <div style="display:flex;align-items:center;">
+                  ${img}
+                  <div>
+                    <strong>${u.username}</strong>
+                    <div style=\"font-size:11px;color:#666;display:flex;align-items:center;gap:6px;margin-top:4px;\">
+                      <span class=\"status-dot\" style=\"background:${dotColor}\"></span>
+                      <span>${statusText}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
             el.appendChild(item);
           });
         } catch (err) {
