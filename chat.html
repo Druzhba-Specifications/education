@@ -929,39 +929,81 @@
     }
 
     // SEND MESSAGE
-    document.getElementById('sendBtn').onclick = () => {
+    document.getElementById('sendBtn').onclick = async () => {
       const inp = document.getElementById('message');
       const txt = inp.value.trim();
       if (!txt) return;
 
-      if (current==='public') {
-        if (isAdmin && txt.startsWith('/')) {
-          const [cmd,target,...rest] = txt.split(' ');
-          const ep = cmd.slice(1);
-          const body = ep==='warn'
-            ? { user: target, reason: rest.join(' ') }
-            : { user: target };
-          fetch(`${API}/${ep}`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify(body)
+      try {
+        if (current === 'public' && isAdmin && txt.startsWith('/')) {
+          // Admin slash-commands
+          const parts = txt.split(' ');
+          const cmd = parts[0].slice(1).toLowerCase();
+          const args = parts.slice(1);
+          let endpoint = cmd;
+          let body = {};
+
+          switch (cmd) {
+            case 'warn':
+              // /warn username reason...
+              body = { user: args[0], reason: args.slice(1).join(' ') };
+              endpoint = 'warn';
+              break;
+            case 'ban':
+            case 'unban':
+              body = { user: args[0] };
+              break;
+            case 'del':
+            case 'delete':
+              // /del messageId
+              body = { id: args[0] };
+              endpoint = 'del';
+              break;
+            case 'pause':
+            case 'unpause':
+            case 'clear':
+            case 'off':
+            case 'on':
+              // no extra body expected
+              body = {};
+              break;
+            default:
+              // unknown command — try generic endpoint with rest as body
+              body = { args: args };
+              break;
+          }
+
+          const res = await fetch(`${API}/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          if (!res.ok) {
+            const text = await res.text().catch(()=>null);
+            alert(`Command failed: ${res.status} ${res.statusText}\n${text||''}`);
+          }
+        } else if (current === 'public') {
+          // normal public message
+          await fetch(`${API}/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user, message: txt })
           });
         } else {
-          fetch(`${API}/send`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ user, message: txt })
+          // private message
+          await fetch(`${API}/pm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ from: user, to: current, message: txt })
           });
         }
-      } else {
-        fetch(`${API}/pm`, {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({ from: user, to: current, message: txt })
-        });
+      } catch (err) {
+        console.error('Send error', err);
       }
 
       inp.value = '';
+      // refresh chat after command or message
       loadChat();
     };
 
