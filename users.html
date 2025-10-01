@@ -5,21 +5,28 @@
   <title>All Users</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    .user-list { display: flex; flex-wrap: wrap; gap: 20px; }
+    .user-list { display: flex; flex-wrap: wrap; gap: 12px; }
     .user-card {
-      width: 180px;
+      display: flex;
+      align-items: center;
+      width: 320px;
       border: 1px solid #ccc;
       border-radius: 8px;
-      padding: 10px;
-      text-align: center;
+      padding: 8px 10px;
+      text-align: left;
+      gap: 12px;
+      background: #fff;
+      box-sizing: border-box;
     }
     .user-card img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
       object-fit: cover;
-      margin-bottom: 8px;
+      flex: 0 0 56px;
+      margin: 0;
     }
+    .user-info { flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
     .username { font-weight: bold; margin-bottom: 4px; }
     .ranks   { font-size: 0.9em; color: #555; margin-bottom: 8px; }
     .online  { color: green; font-size: 0.85em; margin-bottom: 8px; }
@@ -92,13 +99,16 @@
           // Avatar (always load from local assets folder)
           const img = document.createElement('img');
           img.src = `assets/${u.profilePic}`;
-          card.appendChild(img);
+
+          // Info container (to the right of avatar)
+          const info = document.createElement('div');
+          info.className = 'user-info';
 
           // Username
           const nameDiv = document.createElement('div');
           nameDiv.className = 'username';
           nameDiv.innerText = u.username;
-          card.appendChild(nameDiv);
+          info.appendChild(nameDiv);
 
           // Ranks
           const userRanks = ranks[u.username] || [];
@@ -107,23 +117,23 @@
           ranksDiv.innerText = userRanks.length
             ? `Ranks: ${userRanks.join(', ')}`
             : 'Ranks: none';
-          card.appendChild(ranksDiv);
+          info.appendChild(ranksDiv);
 
           // Online / Offline
           const statusDiv = document.createElement('div');
           statusDiv.className = u.online ? 'online' : 'offline';
           statusDiv.innerText = u.online ? 'Online' : 'Offline';
-          card.appendChild(statusDiv);
+          info.appendChild(statusDiv);
 
           // Banned badge
           if (u.banned) {
             const banDiv = document.createElement('div');
             banDiv.className = 'banned';
             banDiv.innerText = 'BANNED';
-            card.appendChild(banDiv);
+            info.appendChild(banDiv);
           }
 
-          // Admin Ban/Unban
+          // Admin Ban/Unban (place to the right inside info)
           if (isAdmin) {
             const btn = document.createElement('button');
             btn.className = 'admin-btn';
@@ -136,9 +146,12 @@
               });
               render();
             };
-            card.appendChild(btn);
+            // place admin button at the end of info
+            info.appendChild(btn);
           }
 
+          card.appendChild(img);
+          card.appendChild(info);
           listEl.appendChild(card);
         });
       }
