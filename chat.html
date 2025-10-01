@@ -279,15 +279,17 @@
       padding: 10px;
       box-sizing: border-box;
       transform: translateX(0);
-      transition: transform 0.2s ease;
+      transition: transform 0.25s ease;
       z-index: 1500;
+      right: 0;
     }
-    #threadsSidebar.collapsed { transform: translateX(100%); }
+    /* collapsed: move completely off-screen */
+    #threadsSidebar.collapsed { transform: translateX(100%); pointer-events: none; }
     #threadsToggle {
       position: absolute;
-      left: -56px;
+      left: -40px; /* tuck toggle closer to the right edge when collapsed */
       top: 12px;
-      width: 56px;
+      width: 40px;
       background: #007bff;
       color: #fff;
       border-radius: 6px 0 0 6px;
@@ -297,6 +299,7 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index:1600;
     }
     #threadsList { overflow-y: auto; max-height: calc(100vh - 80px); padding-top: 40px; }
     .thread-item { padding: 8px 10px; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -316,15 +319,16 @@
       padding: 10px;
       box-sizing: border-box;
       transform: translateX(0);
-      transition: transform 0.2s ease;
+      transition: transform 0.25s ease;
       z-index: 1500;
     }
-    #usersSidebar.collapsed { transform: translateX(100%); }
+    /* collapsed: move completely off-screen */
+    #usersSidebar.collapsed { transform: translateX(110%); pointer-events: none; }
     #usersToggle {
       position: absolute;
-      left: -56px;
+      left: -40px; /* tuck toggle closer to the right edge when collapsed */
       top: 12px;
-      width: 56px;
+      width: 40px;
       background: #28a745;
       color: #fff;
       border-radius: 6px 0 0 6px;
@@ -334,6 +338,7 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      z-index:1600;
     }
     #usersList { overflow-y: auto; max-height: calc(100vh - 120px); padding-top: 40px; }
     .user-item { padding: 8px 6px; border-bottom: 1px solid #eee; display:flex; align-items:center; gap:8px; }
