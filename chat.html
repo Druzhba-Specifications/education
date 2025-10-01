@@ -1019,24 +1019,27 @@
           el.innerHTML = '';
           data.forEach(u => {
             const item = document.createElement('div');
-            item.className = 'user-item';
+            item.className = 'thread-item';
             const avatar = u.profilePic || u.avatar || u.img || '';
             const img = `<img src="${avatar?('assets/'+avatar):'assets/placeholder.png'}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">`;
             const online = !!u.online;
             const dotColor = online ? '#28a745' : '#cccccc';
             const statusText = online ? 'Online' : 'Offline';
-            item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;">
-                <div style="display:flex;align-items:center;">
-                  ${img}
-                  <div>
-                    <strong>${u.username}</strong>
-                    <div style=\"font-size:11px;color:#666;display:flex;align-items:center;gap:6px;margin-top:4px;\">
-                      <span class=\"status-dot\" style=\"background:${dotColor}\"></span>
-                      <span>${statusText}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>`;
+            item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;">${img}<div><strong>${u.username}</strong><div style=\"font-size:11px;color:#666;\"><span class=\"status-dot\" style=\"background:${dotColor};margin-right:6px;\"></span>${statusText}</div></div></div></div>`;
+            // Clicking a user opens a private channel (mirror threads behavior)
+            item.onclick = async () => {
+              // set current channel to this user and mark channels UI
+              current = u.username;
+              // mark active in left channels list if present
+              document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
+              const chEl = document.querySelector(`.channel[data-ch="${u.username}"]`);
+              if (chEl) chEl.classList.add('active');
+              // collapse users sidebar
+              const us = document.getElementById('usersSidebar');
+              us.classList.add('collapsed');
+              // load private messages with this user
+              await loadChat();
+            };
             el.appendChild(item);
           });
         } catch (err) {
