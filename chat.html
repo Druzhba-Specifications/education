@@ -41,39 +41,51 @@
       font-weight: bold; 
       background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet); 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
     } 
     .rank-DOMINATOR { 
       font-weight: bold; 
       background: linear-gradient(to right, blue, purple, green); 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
     } 
     .rank-Chopped { 
       font-weight: bold; 
-      background: linear-gradient(to right, red, black,  darkblue blue,yellow, darkred, violet); 
+      background: linear-gradient(to right, red, black, darkblue, blue, yellow, darkred, violet); 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
     } 
     .rank-Sunburnt { 
       font-weight: bold; 
       background: linear-gradient(to right, black, darkred, red, hotpink, orange, yellow); 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
     } 
     .rank-Discorder { 
       font-weight: bold; 
       background: linear-gradient(to right, blue, darkblue, indigo, #682860, violet); 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
     } 
-    .rank-BEAN { font-weight: bold; background: linear-gradient(to right, black, #B7410E, brown, orange, yellow); -webkit-background-clip: text; color: transparent; } 
+    .rank-BEAN { 
+      font-weight: bold; 
+      background: linear-gradient(to right, black, #B7410E, brown, orange, yellow); 
+      -webkit-background-clip: text; 
+      background-clip: text;
+      color: transparent; 
+    }
     .rank-OG { color: gold; font-weight: bold; } 
     .rank-Bloody { color: darkred; font-weight: bold; } 
     .rank-ADMIN { 
       font-weight: bold; 
       background: linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet); background-size: 400% 400%; 
       -webkit-background-clip: text; 
+      background-clip: text;
       color: transparent; 
       animation: rainbowMove 5s infinite linear; 
     } 
@@ -125,14 +137,16 @@
     #chatBox {
       flex: 1;
       border: 1px solid #ccc;
-      background: var(--chat-bg);
+      background: #ffffff;
       padding: 10px;
       overflow-y: auto;
       white-space: pre-wrap;
       margin-bottom: 10px;
     }
-    .msg { margin: 4px 0; }
-    .msg.system { font-style: italic; color: gray; }
+    /* Text-like chat appearance */
+    #chatBox { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace; font-size: 13px; color: #111; }
+    .msg { margin: 0; padding: 6px 0; border-bottom: 1px solid #eee; }
+    .msg.system { font-style: italic; color: #666; background: #fafafa; padding: 6px; border-bottom: 1px dashed #eee; }
 
     #controls {
       display: flex;
@@ -248,6 +262,44 @@
     #adminControls button {
       margin-right: 5px;
     }
+
+    /* THREADS SIDEBAR (right) */
+    #threadsSidebar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100vh;
+      width: 320px;
+      background: #f9f9f9;
+      border-left: 1px solid #ddd;
+      box-shadow: -2px 0 6px rgba(0,0,0,0.04);
+      padding: 10px;
+      box-sizing: border-box;
+      transform: translateX(0);
+      transition: transform 0.2s ease;
+      z-index: 1500;
+    }
+    #threadsSidebar.collapsed { transform: translateX(100%); }
+    #threadsToggle {
+      position: absolute;
+      left: -56px;
+      top: 12px;
+      width: 56px;
+      background: #007bff;
+      color: #fff;
+      border-radius: 6px 0 0 6px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #threadsList { overflow-y: auto; max-height: calc(100vh - 80px); padding-top: 40px; }
+    .thread-item { padding: 8px 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+    .thread-item:hover { background: #fff; }
+    .thread-title { font-weight: bold; font-size: 13px; }
+    .thread-meta { font-size: 12px; color: #666; }
   </style>
 </head>
 <body>
@@ -343,6 +395,13 @@
       <button id="onBtn">On</button>
       <button id="statsBtn">Stats</button>
     </div>
+
+  <!-- Threads sidebar (right) -->
+  <div id="threadsSidebar" class="collapsed">
+    <div id="threadsToggle">Threads</div>
+    <h3 style="margin:6px 0 6px 0;">Threads</h3>
+    <div id="threadsList">Loading…</div>
+  </div>
 
   <!-- Roadmap UI removed for public chat -->
 
@@ -843,6 +902,37 @@
     await loadChannels();
     await loadChat();
     setInterval(loadChat, 2000);
+      // Threads: load and refresh
+      async function loadThreads(){
+        const el = document.getElementById('threadsList');
+        try {
+          const data = await fetch(`${API}/threads`).then(r=>r.json());
+          if (!Array.isArray(data)) return el.innerText = 'No threads';
+          el.innerHTML = '';
+          data.forEach(t => {
+            const item = document.createElement('div');
+            item.className = 'thread-item';
+            item.innerHTML = `<div class="thread-title">${t.title}</div><div class="thread-meta">by ${t.creator} · ${t.messageCount} msgs</div>`;
+            item.onclick = async () => {
+              // open thread view in a modal or new window (simplest: alert for now)
+              const msgs = await fetch(`${API}/threads/${encodeURIComponent(t.id)}`).then(r=>r.json());
+              const preview = msgs.map(m=>`${m.user}: ${m.text}`).join('\n\n');
+              alert(`Thread: ${t.title}\n---\n${preview}`);
+            };
+            el.appendChild(item);
+          });
+        } catch (err) {
+          console.error('Error loading threads', err);
+          el.innerText = 'Error loading threads';
+        }
+      }
+      document.getElementById('threadsToggle').onclick = () => {
+        const s = document.getElementById('threadsSidebar');
+        s.classList.toggle('collapsed');
+      };
+      // initial threads load and periodic refresh
+      loadThreads();
+      setInterval(loadThreads, 5000);
 
   })();
   </script>
