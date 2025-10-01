@@ -327,8 +327,11 @@
     <div id="main" style="position:relative;">
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
-      <button id="allUsersBtn">All Users</button>
-      <button id="allranksBtn">All Users</button>
+      <span style="display:flex;gap:8px;align-items:center;">
+        <button id="threadsOpenBtn">Threads</button>
+        <button id="usersOpenBtn">Users</button>
+        <button id="statsBtn">Stats</button>
+      </span>
       <span id="adminActions" style="display:none;">
         <button id="showBannedBtn">Show Banned</button>
         <button id="helpBtn">Help</button>
@@ -404,6 +407,16 @@
     <div id="threadsToggle">Threads</div>
     <h3 style="margin:6px 0 6px 0;">Threads</h3>
     <div id="threadsList">Loading…</div>
+  </div>
+
+  <!-- Users sidebar (right) -->
+  <div id="usersSidebar" class="collapsed">
+    <div id="usersToggle">Users</div>
+    <h3 style="margin:6px 0 6px 0;">Online Users</h3>
+    <div id="usersList">Loading…</div>
+    <div style="position:absolute;bottom:12px;left:12px;right:12px;">
+      <button id="allUsersLink" style="width:100%;">All Users</button>
+    </div>
   </div>
 
   <!-- Roadmap UI removed for public chat -->
@@ -483,11 +496,8 @@
       if (res.ok) alert('Banned: ' + (await res.json()).join(', '));
       else alert('Forbidden');
     };
-    document.getElementById('helpBtn').onclick = async () => {
-      const res = await fetch(`${API}/help?admin=${user}`);
-      if (res.ok) alert(JSON.stringify(await res.json(), null, 2));
-      else alert('Forbidden');
-    };
+    // Help now goes to help.html (static page)
+    document.getElementById('helpBtn').onclick = () => location.href = 'help.html';
 
     // THREADS UI
     const threadListDiv = document.getElementById('threadList');
@@ -576,8 +586,11 @@
     const sizeVal      = document.getElementById('optFontSizeVal');
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
-    document.getElementById('allUsersBtn').onclick = () => location.href = 'users.html';
-    document.getElementById('allranksBtn').onclick = () => location.href = 'ranks.html';
+  // header buttons wiring (threads/users toggles are added in DOM)
+  const threadsOpenBtn = document.getElementById('threadsOpenBtn');
+  const usersOpenBtn   = document.getElementById('usersOpenBtn');
+  threadsOpenBtn && (threadsOpenBtn.onclick = () => document.getElementById('threadsSidebar').classList.toggle('collapsed'));
+  usersOpenBtn && (usersOpenBtn.onclick = () => document.getElementById('usersSidebar').classList.toggle('collapsed'));
 
     // WELCOME POPUP
     welcomeClose.onclick = () => welcomeModal.style.display = 'none';
@@ -952,6 +965,35 @@
         const s = document.getElementById('threadsSidebar');
         s.classList.toggle('collapsed');
       };
+      // Users sidebar toggle and population
+      document.getElementById('usersToggle').onclick = () => {
+        const s = document.getElementById('usersSidebar');
+        s.classList.toggle('collapsed');
+      };
+
+      async function loadUsersSidebar(){
+        const el = document.getElementById('usersList');
+        try {
+          const data = await fetch(`${API}/users`).then(r=>r.json());
+          if (!Array.isArray(data)) return el.innerText = 'No users';
+          el.innerHTML = '';
+          data.forEach(u => {
+            const item = document.createElement('div');
+            item.className = 'thread-item';
+            const avatar = u.profilePic || u.avatar || u.img || '';
+            const img = `<img src="${avatar?('assets/'+avatar):'assets/placeholder.png'}" style="width:28px;height:28px;border-radius:6px;object-fit:cover;margin-right:8px;vertical-align:middle;">`;
+            item.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;"><div style="display:flex;align-items:center;">${img}<div><strong>${u.username}</strong><div style=\"font-size:11px;color:#666;\">${u.status||''}</div></div></div></div>`;
+            el.appendChild(item);
+          });
+        } catch (err) {
+          console.error('Error loading users', err);
+          el.innerText = 'Error loading users';
+        }
+      }
+      document.getElementById('allUsersLink').onclick = () => location.href = 'users.html';
+      // initial users load and periodic refresh
+      loadUsersSidebar();
+      setInterval(loadUsersSidebar, 7000);
       // initial threads load and periodic refresh
       loadThreads();
       setInterval(loadThreads, 5000);
