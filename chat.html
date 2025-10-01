@@ -310,28 +310,28 @@
     #usersSidebar {
       position: fixed;
       top: 0;
-      right: 320px; /* sit left of threads by default */
+      left: 0; /* left side drawer */
       height: 100vh;
       width: 260px;
       background: #f9f9f9;
-      border-left: 1px solid #ddd;
-      box-shadow: -2px 0 6px rgba(0,0,0,0.04);
+      border-right: 1px solid #ddd;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.04);
       padding: 10px;
       box-sizing: border-box;
       transform: translateX(0);
       transition: transform 0.25s ease;
       z-index: 1500;
     }
-    /* collapsed: move completely off-screen */
-    #usersSidebar.collapsed { transform: translateX(110%); pointer-events: none; }
+    /* collapsed: move completely off-screen to the left */
+    #usersSidebar.collapsed { transform: translateX(-110%); pointer-events: none; }
     #usersToggle {
       position: absolute;
-      left: -40px; /* tuck toggle closer to the right edge when collapsed */
+      right: -40px; /* toggle sits outside the left panel at the very edge */
       top: 12px;
       width: 40px;
       background: #28a745;
       color: #fff;
-      border-radius: 6px 0 0 6px;
+      border-radius: 0 6px 6px 0;
       height: 36px;
       display: flex;
       align-items: center;
@@ -369,7 +369,6 @@
       <h2>Welcome, <span id="username"></span></h2>
       <span style="display:flex;gap:8px;align-items:center;">
         <button id="threadsOpenBtn">Threads</button>
-        <button id="usersOpenBtn">Users</button>
         <button id="statsBtn">Stats</button>
       </span>
       <span id="adminActions" style="display:none;">
@@ -628,9 +627,7 @@
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
   // header buttons wiring (threads/users toggles are added in DOM)
   const threadsOpenBtn = document.getElementById('threadsOpenBtn');
-  const usersOpenBtn   = document.getElementById('usersOpenBtn');
   threadsOpenBtn && (threadsOpenBtn.onclick = () => document.getElementById('threadsSidebar').classList.toggle('collapsed'));
-  usersOpenBtn && (usersOpenBtn.onclick = () => document.getElementById('usersSidebar').classList.toggle('collapsed'));
 
     // WELCOME POPUP
     welcomeClose.onclick = () => welcomeModal.style.display = 'none';
