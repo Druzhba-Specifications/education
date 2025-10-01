@@ -366,7 +366,6 @@
     <div id="header">
       <h2>Welcome, <span id="username"></span></h2>
       <span style="display:flex;gap:8px;align-items:center;">
-        <button id="threadsOpenBtn">Threads</button>
         <button id="statsBtn">Stats</button>
       </span>
       <span id="adminActions" style="display:none;">
@@ -619,9 +618,7 @@
     const sizeVal      = document.getElementById('optFontSizeVal');
     document.getElementById('username').innerText = user;
     if (isAdmin) document.getElementById('adminControls').style.display = 'block';
-  // header buttons wiring (threads/users toggles are added in DOM)
-  const threadsOpenBtn = document.getElementById('threadsOpenBtn');
-  threadsOpenBtn && (threadsOpenBtn.onclick = () => document.getElementById('threadsSidebar').classList.toggle('collapsed'));
+  // header buttons wiring (sidebars are toggled by their green tab cutouts)
 
     // WELCOME POPUP
     welcomeClose.onclick = () => welcomeModal.style.display = 'none';
