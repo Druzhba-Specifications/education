@@ -386,6 +386,7 @@
       <span id="adminActions" style="display:none;">
         <button id="showBannedBtn">Show Banned</button>
         <button id="helpBtn">Help</button>
+        <button id="hideBtn">Hide</button>
       </span>
     </div>
     <div id="sidebarHint">Press T to toggle Threads · U to toggle Users</div>
@@ -546,6 +547,9 @@
     };
     // Help now goes to help.html (static page)
     document.getElementById('helpBtn').onclick = () => location.href = 'help.html';
+  // Admin hide page
+  const hideBtn = document.getElementById('hideBtn');
+  if (hideBtn) hideBtn.onclick = () => location.href = 'hide.html';
 
     // THREADS UI
     const threadListDiv = document.getElementById('threadList');
