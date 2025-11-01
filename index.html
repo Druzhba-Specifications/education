@@ -127,22 +127,18 @@
       if (!u || !p) { msgEl.innerText = 'Please provide username and password.'; return; }
       msgEl.innerText = '';
       try {
-        // Try backend /register then fallback to /users
+        // Try several backend endpoints to persist the account. If none succeed, fall back to localStorage.
+        const endpoints = ['/register','/accounts.json','/accounts','/users'];
         let ok = false;
-        try {
-          const res = await fetch(`${backend}/register`, {
-            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p })
-          });
-          if (res.ok) ok = true;
-        } catch (e) { /* ignore */ }
-        if (!ok) {
+        for (const ep of endpoints) {
           try {
-            const res2 = await fetch(`${backend}/users`, {
+            const res = await fetch(`${backend}${ep}`, {
               method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p })
             });
-            if (res2.ok) ok = true;
-          } catch (e) { /* ignore */ }
+            if (res.ok) { ok = true; break; }
+          } catch (e) { /* ignore and try next */ }
         }
+
         if (!ok) {
           // fallback local create
           const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');

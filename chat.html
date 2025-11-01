@@ -868,15 +868,22 @@
       if (current==='public') {
         const sysMsg = localStorage.getItem('systemMessage');
         if (sysMsg) {
-          box.innerHTML += `<div class="msg system">${sysMsg}</div>`;
+          // Render login/system messages as regular chat messages (with avatar)
+          const avatarSys = 'assets/gogologo.png';
+          const messageHtml = `<img class="avatar" src="${avatarSys}" alt="system"><div class="content"><em>${sysMsg}</em></div>`;
+          box.innerHTML += `<div class="msg">${messageHtml}</div>`;
           localStorage.removeItem('systemMessage');
         }
       }
 
       data.forEach(item=>{
-        // system messages
+        // system-message strings (stored with << prefix) -> render like normal messages
         if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
-          box.innerHTML += `<div class="msg system">${item}</div>`;
+          // strip leading << and trailing >> if present
+          let clean = item.replace(/^<</, '').replace(/>>$/, '');
+          const avatarSys = 'assets/gogologo.png';
+          const messageHtml = `<img class="avatar" src="${avatarSys}" alt="system"><div class="content"><em>${clean}</em></div>`;
+          box.innerHTML += `<div class="msg">${messageHtml}</div>`;
           return;
         }
 
@@ -917,14 +924,13 @@
           contentHtml = `[${t}] ${contentHtml}`;
         }
 
-        // system messages should stay full-width
-        if (current==='public' && typeof item==='string' && item.startsWith('<<')) {
-          box.innerHTML += `<div class="msg system">${item}</div>`;
-        } else {
+        // Render normal message (all non-system messages)
+        if (!(current==='public' && typeof item==='string' && item.startsWith('<<'))) {
           const messageHtml = `<img class="avatar" src="${avatar}" alt="${sender}">` +
                               `<div class="content">${contentHtml}</div>`;
           box.innerHTML += `<div class="msg">${messageHtml}</div>`;
         }
+        
       });
 
       lastRead[current] = newest;
