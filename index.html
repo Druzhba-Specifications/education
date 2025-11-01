@@ -139,7 +139,16 @@
           } catch (e) { /* ignore and try next */ }
         }
 
-        if (!ok) {
+        // If the backend accepted the creation we still mirror it locally so UI and backups see it.
+        if (ok) {
+          try {
+            const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
+            if (!localUsers.find(x => x.username === u)) {
+              localUsers.push({ username: u, password: p, isAdmin: false });
+              localStorage.setItem('localUsers', JSON.stringify(localUsers));
+            }
+          } catch (e) { /* ignore localStorage write errors */ }
+        } else {
           // fallback local create
           const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
           if (localUsers.find(x=>x.username===u)) { msgEl.innerText = 'User already exists (offline mode).'; return; }
