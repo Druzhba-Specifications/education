@@ -926,7 +926,8 @@
         }
         if (ts > newest) newest = ts;
 
-        const sender    = from.trim();
+  const senderRaw = (from || '').toString();
+  const sender    = senderRaw.trim() || '(unknown)';
         const userRanks = ranks[sender] || [];
         const rankHtml  = userRanks.map(r=>`<span class="rank-${r.replace(/\s+/g,'-')}">${r}</span>`).join(' ');
 

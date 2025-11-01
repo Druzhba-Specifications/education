@@ -118,9 +118,32 @@
   async function backupPublic(){
     appendLog('Backing up public log...');
     const pub = await fetchJson(API+'/log') || [];
-    setBar('publicBar', 100);
+    // ensure progress shows completion even if zero items
+    setBar('publicBar', 0);
     document.getElementById('publicLog').innerText = `Public: ${pub.length}`;
-    pub.forEach(m => appendLog(`Public msg: ${typeof m==='string'?m:(m.from||'?')}`));
+    if (pub.length === 0) {
+      appendLog('No public messages found');
+      setBar('publicBar', 100);
+    } else {
+      // log sender information robustly for multiple shapes
+      pub.forEach(m => {
+        if (typeof m === 'string') {
+          // try to parse "User>>Message"
+          if (m.includes('>>')) {
+            const p = m.split('>>');
+            appendLog(`Public msg from '${p[0].trim()}'`);
+          } else {
+            appendLog(`Public msg (raw): ${m}`);
+          }
+        } else if (m && typeof m === 'object') {
+          const sender = (m.from || m.user || m.username || m.author || m.sender || '?');
+          appendLog(`Public msg from '${sender}'`);
+        } else {
+          appendLog('Public msg: (unknown format)');
+        }
+      });
+      setBar('publicBar', 100);
+    }
     return pub;
   }
 
@@ -150,7 +173,7 @@
     for(let i=0;i<users.length;i++){
       for(let j=0;j<users.length;j++){ if(i===j) continue; pairs.push([users[i].username||users[i].name, users[j].username||users[j].name]); }
     }
-    appendLog(`Fallback: will fetch ${pairs.length} pairs with concurrency`);
+  appendLog(`Fallback: will fetch ${pairs.length} pairs with concurrency`);
     const collected = [];
     let completed = 0;
     await mapLimit(pairs, 6, async (pair, idx) => {
@@ -161,6 +184,8 @@
       if(d && Array.isArray(d) && d.length){ d.forEach(m=> collected.push({from:a,to:b,...m})); appendLog(`Loaded ${d.length} DM(s) ${a}->${b}`); }
       completed++; if(pairs.length) setBar('privateBar', Math.round(completed/pairs.length*100));
     });
+    // ensure bar reaches 100 even if no pairs or early exit
+    setBar('privateBar', 100);
     document.getElementById('privateLog').innerText = `Private (collected): ${collected.length}`;
     return collected;
   }
@@ -213,7 +238,11 @@
     if(sections.includes('users')){
       const users = Array.from(dom.querySelectorAll('backup>users>user'));
       appendLog(`Restoring ${users.length} users...`);
-      await mapLimit(users, 6, async (el, idx) => {
+      if (users.length === 0) {
+        appendLog('No users to restore');
+        setBar('usersBar', 100);
+      } else {
+        await mapLimit(users, 6, async (el, idx) => {
         const username = el.getAttribute('username') || el.textContent || '';
         const passwd = el.textContent || '';
         appendLog(`Restoring user '${username}'`);
@@ -224,43 +253,59 @@
           if(!ok){ const local = JSON.parse(localStorage.getItem('localUsers')||'[]'); if(!local.find(u=>u.username===username)) local.push({username,password:passwd,isAdmin:false}); localStorage.setItem('localUsers',JSON.stringify(local)); appendLog(`Stored '${username}' locally.`); }
           else appendLog(`Server accepted user '${username}'.`);
         }catch(e){ appendLog('ERR restore user '+e.message); }
-        setBar('usersBar', Math.round((idx+1)/users.length*100));
-      });
+          setBar('usersBar', Math.round((idx+1)/users.length*100));
+        });
+      }
     }
 
     // Public
     if(sections.includes('public')){
       const msgs = Array.from(dom.querySelectorAll('backup>public>msg'));
       appendLog(`Restoring ${msgs.length} public messages...`);
-      await mapLimit(msgs, 8, async (m, idx) => {
+      if (msgs.length === 0) {
+        appendLog('No public messages to restore');
+        setBar('publicBar', 100);
+      } else {
+        await mapLimit(msgs, 8, async (m, idx) => {
         const ts = m.getAttribute('ts')||''; const user = m.getAttribute('user')||''; const text = m.textContent||'';
         try{ await fetch(API+'/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:user,message:text,ts:ts})}); appendLog(`Posted public msg ${idx+1}/${msgs.length}`); }
         catch(e){ appendLog('ERR post public '+e.message); }
         setBar('publicBar', Math.round((idx+1)/msgs.length*100));
-      });
+        });
+      }
     }
 
     // Threads
     if(sections.includes('threads')){
       const threads = Array.from(dom.querySelectorAll('backup>threads>thread'));
       appendLog(`Restoring ${threads.length} threads...`);
-      await mapLimit(threads, 6, async (t, idx) => {
+      if (threads.length === 0) {
+        appendLog('No threads to restore');
+        setBar('threadsBar', 100);
+      } else {
+        await mapLimit(threads, 6, async (t, idx) => {
         try{ const payload = JSON.parse(t.textContent||'{}'); await fetch(API+'/threads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); appendLog(`Posted thread ${t.getAttribute('title')||t.getAttribute('id')}`); }
         catch(e){ appendLog('ERR thread '+e.message); }
         setBar('threadsBar', Math.round((idx+1)/threads.length*100));
-      });
+        });
+      }
     }
 
     // Private DMs
     if(sections.includes('private')){
       const dms = Array.from(dom.querySelectorAll('backup>private>dm'));
       appendLog(`Restoring ${dms.length} private dms...`);
-      await mapLimit(dms, 8, async (d, idx) => {
+      if (dms.length === 0) {
+        appendLog('No private DMs to restore');
+        setBar('privateBar', 100);
+      } else {
+        await mapLimit(dms, 8, async (d, idx) => {
         const from = d.getAttribute('from')||''; const to = d.getAttribute('to')||''; const ts = d.getAttribute('ts')||''; const text = d.textContent||'';
         try{ await fetch(API+'/pm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from,to,message:text,ts})}); appendLog(`Posted DM ${from}->${to} (${idx+1}/${dms.length})`); }
         catch(e){ appendLog('ERR post dm '+e.message); }
         setBar('privateBar', Math.round((idx+1)/dms.length*100));
-      });
+        });
+      }
     }
 
     appendLog('Restore finished.');
