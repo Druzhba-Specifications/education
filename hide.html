@@ -108,11 +108,46 @@
   // ---- Backups per-section ----
   async function backupUsers(){
     appendLog('Backing up users...');
-    const users = await fetchJson(API+'/users') || [];
+    // Merge server users with localStorage users to get complete profiles
+    const [users, ranks] = await Promise.all([
+      fetchJson(API+'/users'),
+      fetchJson(API+'/ranks.json')
+    ]);
+    const serverUsers = users || [];
+    const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
+    
+    // Build complete user records with all available data
+    const mergedUsers = serverUsers.map(u => {
+      const local = localUsers.find(x => x.username === u.username);
+      return {
+        username: u.username,
+        password: local ? local.password : (u.password || u.hash || ''),
+        isAdmin: local ? local.isAdmin : (u.isAdmin || false),
+        profilePic: u.profilePic || 'placeholder.png',
+        online: u.online || false,
+        banned: u.banned || false,
+        ranks: ranks[u.username] || []
+      };
+    });
+    // Add any local-only users
+    localUsers.forEach(local => {
+      if (!mergedUsers.find(u => u.username === local.username)) {
+        mergedUsers.push({
+          username: local.username,
+          password: local.password || '',
+          isAdmin: local.isAdmin || false,
+          profilePic: 'placeholder.png',
+          online: false,
+          banned: false,
+          ranks: []
+        });
+      }
+    });
+    
     setBar('usersBar', 100);
-    document.getElementById('usersLog').innerText = `Users: ${users.length}`;
-    users.forEach(u => appendLog(`User: '${u.username||u.name||"?"}' hash:'${u.password||u.hash||'N/A'}'`));
-    return users;
+    document.getElementById('usersLog').innerText = `Users: ${mergedUsers.length}`;
+    mergedUsers.forEach(u => appendLog(`User: '${u.username}' [${u.ranks.join(',')||'no ranks'}] ${u.isAdmin?'(admin)':''} pic:${u.profilePic}`));
+    return mergedUsers;
   }
 
   async function backupPublic(){
@@ -193,7 +228,12 @@
   function buildXml({users,publicLog,threads,privateAll}){
     function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     let xml = '<?xml version="1.0" encoding="utf-8"?>\n<backup>\n';
-    xml += '<users>\n'; (users||[]).forEach(u=> xml += `<user username="${esc(u.username||u.name||'')}">${esc(u.password||u.hash||'')}</user>\n`);
+    xml += '<users>\n'; (users||[]).forEach(u=> {
+      xml += `<user username="${esc(u.username||u.name||'')}" isAdmin="${esc(String(u.isAdmin||false))}" profilePic="${esc(u.profilePic||'placeholder.png')}" online="${esc(String(u.online||false))}" banned="${esc(String(u.banned||false))}">
+        <password>${esc(u.password||u.hash||'')}</password>
+        <ranks>${(u.ranks||[]).map(r => `<rank>${esc(r)}</rank>`).join('')}</ranks>
+      </user>\n`;
+    });
     xml += '</users>\n';
     xml += '<public>\n'; (publicLog||[]).forEach(item=>{
       if (typeof item === 'string') xml += `<msg ts="">${esc(item)}</msg>\n`;
@@ -242,17 +282,87 @@
         appendLog('No users to restore');
         setBar('usersBar', 100);
       } else {
+        // Load current localStorage users for merging
+        const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
+        
         await mapLimit(users, 6, async (el, idx) => {
-        const username = el.getAttribute('username') || el.textContent || '';
-        const passwd = el.textContent || '';
+        const username = el.getAttribute('username') || '';
+        const isAdmin = el.getAttribute('isAdmin') === 'true';
+        const profilePic = el.getAttribute('profilePic') || 'placeholder.png';
+        const online = el.getAttribute('online') === 'true';
+        const banned = el.getAttribute('banned') === 'true';
+        const passwd = el.querySelector('password')?.textContent || '';
+        const ranks = Array.from(el.querySelectorAll('ranks > rank')).map(r => r.textContent || '');
+        
         appendLog(`Restoring user '${username}'`);
-        try{
+        try {
+          // Try to register/restore user to server
           let ok = false;
-          try{ const r = await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r.ok) ok=true; }catch(e){}
-          if(!ok){ try{ const r2 = await fetch(API+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r2.ok) ok=true; }catch(e){} }
-          if(!ok){ const local = JSON.parse(localStorage.getItem('localUsers')||'[]'); if(!local.find(u=>u.username===username)) local.push({username,password:passwd,isAdmin:false}); localStorage.setItem('localUsers',JSON.stringify(local)); appendLog(`Stored '${username}' locally.`); }
-          else appendLog(`Server accepted user '${username}'.`);
-        }catch(e){ appendLog('ERR restore user '+e.message); }
+          try {
+            const r = await fetch(API+'/register', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({
+                username, 
+                password: passwd,
+                isAdmin,
+                profilePic,
+                online,
+                banned
+              })
+            });
+            if(r.ok) ok = true;
+          } catch(e) {
+            appendLog('Register endpoint failed, trying users endpoint...');
+          }
+          
+          if(!ok) {
+            try {
+              const r2 = await fetch(API+'/users', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                  username,
+                  password: passwd,
+                  isAdmin,
+                  profilePic,
+                  online,
+                  banned
+                })
+              });
+              if(r2.ok) ok = true;
+            } catch(e) {
+              appendLog('Users endpoint failed, falling back to localStorage...');
+            }
+          }
+
+          // Update localStorage
+          const localIndex = localUsers.findIndex(u => u.username === username);
+          if(localIndex >= 0) {
+            localUsers[localIndex] = {username, password: passwd, isAdmin};
+          } else {
+            localUsers.push({username, password: passwd, isAdmin});
+          }
+          localStorage.setItem('localUsers', JSON.stringify(localUsers));
+
+          // Update ranks if present
+          if(ranks.length > 0) {
+            try {
+              const currentRanks = await fetchJson(API+'/ranks.json') || {};
+              currentRanks[username] = ranks;
+              await fetch(API+'/ranks.json', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(currentRanks)
+              });
+              appendLog(`Updated ranks for ${username}: ${ranks.join(',')}`);
+            } catch(e) {
+              appendLog('Failed to update ranks: ' + e.message);
+            }
+          }
+          
+          appendLog(ok ? `Server accepted user '${username}'` : `User '${username}' stored in localStorage only`);
+        } catch(e) { appendLog('ERR restore user '+e.message); }
           setBar('usersBar', Math.round((idx+1)/users.length*100));
         });
       }
