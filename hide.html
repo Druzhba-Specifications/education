@@ -2,63 +2,84 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Hide — Maintenance Console</title>
+  <title>Admin Console — Boot</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <style>
-    :root{--bg:#000;--fg:#7CFC00;--muted:#555}
+    :root{--bg:#000;--fg:#7CFC00;--muted:#6b6b6b;--panel:#070707}
     html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace}
     .wrap{display:flex;height:100vh}
-    .left{flex:1;padding:20px;box-sizing:border-box;border-right:1px solid #222}
-    .right{width:420px;background:#050505;padding:12px;box-sizing:border-box;overflow:auto}
+    .left{flex:1;padding:20px;box-sizing:border-box;border-right:1px solid #111;display:flex;flex-direction:column}
+    .right{width:420px;background:var(--panel);padding:12px;box-sizing:border-box;overflow:auto}
     h1{font-size:18px;margin:0 0 12px}
-    .controls{display:flex;gap:8px;margin:12px 0}
-    button.cmd{background:#111;color:var(--fg);border:1px solid #333;padding:8px 12px;border-radius:4px;cursor:pointer}
-    .console{background:#000;border:1px solid #111;padding:12px;height:calc(100% - 120px);overflow:auto}
-    .line{white-space:pre-wrap;font-size:13px}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button.cmd{background:#0b0b0b;color:var(--fg);border:1px solid #222;padding:8px 12px;border-radius:4px;cursor:pointer}
+    .console{background:#000;border:1px solid #111;padding:12px;height:calc(100% - 80px);overflow:auto}
+    .line{white-space:pre-wrap;font-size:13px;margin-bottom:6px}
     .section{margin-bottom:16px}
-    .progressWrap{background:#111;border:1px solid #222;padding:6px;border-radius:6px;margin-top:8px}
-    .bar{height:12px;background:#222;border-radius:6px;overflow:hidden}
-    .barInner{height:100%;background:linear-gradient(90deg,#00FF66,#00AA44);width:0%}
+    .progressWrap{background:#0b0b0b;border:1px solid #111;padding:8px;border-radius:6px;margin-top:8px}
+    .bar{height:12px;background:#111;border-radius:6px;overflow:hidden}
+    .barInner{height:100%;background:linear-gradient(90deg,#00ff88,#00aa55);width:0%}
     .miniLog{font-size:12px;color:var(--muted);margin-top:8px}
     .fileInput{display:none}
-    .note{color:var(--muted);font-size:12px;margin-top:4px}
+    .note{color:var(--muted);font-size:12px;margin-top:8px}
+    .label{font-size:12px;color:var(--muted);margin-left:6px}
+    .sectionTitle{font-size:13px;margin:6px 0}
+    .row{display:flex;gap:8px;align-items:center}
+    .smallBtn{padding:6px 10px;font-size:13px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="left">
-      <h1>Boot Console — Hide Mode</h1>
+      <h1>Admin Console — Boot Loader</h1>
+
       <div class="controls">
-        <button class="cmd" id="backupBtn">Backup (Export XML)</button>
-        <label class="cmd" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer"><input id="filePicker" class="fileInput" type="file" accept=".xml"><span>Load Previous (Import XML)</span></label>
-        <button class="cmd" id="restoreBtn">Restore from chosen file</button>
+        <button class="cmd" id="backupAll">Backup All (XML)</button>
+        <button class="cmd" id="backupUsers">Backup Users</button>
+        <button class="cmd" id="backupPublic">Backup Public</button>
+        <button class="cmd" id="backupThreads">Backup Threads</button>
+        <button class="cmd" id="backupPrivate">Backup Private DMs</button>
       </div>
 
       <div class="section">
-        <div class="line">System booting... initializing hide console</div>
-        <div class="progressWrap">
-          <div class="bar"><div id="usersBar" class="barInner" style="width:0%"></div></div>
-          <div class="miniLog" id="usersLog">Users: waiting...</div>
+        <div class="sectionTitle">Restore</div>
+        <div class="row">
+          <label class="cmd" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer"><input id="filePicker" class="fileInput" type="file" accept=".xml">Choose XML file</label>
+          <button class="cmd smallBtn" id="restoreBtn">Restore selected</button>
         </div>
-        <div class="progressWrap">
-          <div class="bar"><div id="publicBar" class="barInner" style="width:0%"></div></div>
-          <div class="miniLog" id="publicLog">Public chat: waiting...</div>
-        </div>
-        <div class="progressWrap">
-          <div class="bar"><div id="privateBar" class="barInner" style="width:0%"></div></div>
-          <div class="miniLog" id="privateLog">Private DMs: waiting...</div>
-        </div>
-        <div class="progressWrap">
-          <div class="bar"><div id="threadsBar" class="barInner" style="width:0%"></div></div>
-          <div class="miniLog" id="threadsLog">Threads: waiting...</div>
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label><input type="checkbox" id="restoreUsers" checked> <span class="label">Users</span></label>
+          <label><input type="checkbox" id="restorePublic" checked> <span class="label">Public</span></label>
+          <label><input type="checkbox" id="restoreThreads" checked> <span class="label">Threads</span></label>
+          <label><input type="checkbox" id="restorePrivate" checked> <span class="label">Private DMs</span></label>
         </div>
       </div>
 
-      <div class="note">When running backup or restore you will see verbose mini-log entries on the right. Use the Restore action with caution; it will attempt to POST items back to server endpoints or fall back to localStorage.</div>
+      <div class="section">
+        <div class="sectionTitle">Progress</div>
+        <div class="progressWrap">
+          <div class="bar"><div id="usersBar" class="barInner" style="width:0%"></div></div>
+          <div class="miniLog" id="usersLog">Users: idle</div>
+        </div>
+        <div class="progressWrap">
+          <div class="bar"><div id="publicBar" class="barInner" style="width:0%"></div></div>
+          <div class="miniLog" id="publicLog">Public chat: idle</div>
+        </div>
+        <div class="progressWrap">
+          <div class="bar"><div id="threadsBar" class="barInner" style="width:0%"></div></div>
+          <div class="miniLog" id="threadsLog">Threads: idle</div>
+        </div>
+        <div class="progressWrap">
+          <div class="bar"><div id="privateBar" class="barInner" style="width:0%"></div></div>
+          <div class="miniLog" id="privateLog">Private DMs: idle</div>
+        </div>
+      </div>
+
+      <div class="note">Backup and restore operate per-section for control and speed. The console on the right shows verbose per-item logs.</div>
     </div>
     <div class="right">
       <h2 style="margin:0 0 8px">Process Log</h2>
-      <div id="processLog" class="console"></div>
+      <div id="processLog" class="console" aria-live="polite"></div>
     </div>
   </div>
 
@@ -67,176 +88,205 @@
   const API = 'https://chat-backend-pdzh.onrender.com';
   const logEl = document.getElementById('processLog');
   const filePicker = document.getElementById('filePicker');
+
   function appendLog(t){ const d=document.createElement('div'); d.className='line'; d.innerText = '> '+t; logEl.appendChild(d); logEl.scrollTop = logEl.scrollHeight; }
+  function setBar(id,pct){ const el = document.getElementById(id); if(el) el.style.width = Math.max(0,Math.min(100,pct))+'%'; }
 
-  function setBar(id, pct){ document.getElementById(id).style.width = Math.max(0,Math.min(100,pct))+'%'; }
+  // concurrency helper: map over array with concurrency limit
+  async function mapLimit(arr, limit, fn){
+    const results = [];
+    let i = 0;
+    const workers = new Array(Math.min(limit, arr.length)).fill(0).map(async () => {
+      while(i < arr.length){ const idx = i++; try{ results[idx] = await fn(arr[idx], idx); }catch(e){ results[idx] = e; } }
+    });
+    await Promise.all(workers);
+    return results;
+  }
 
-  async function tryFetchJson(url){ try{ const r=await fetch(url); if(!r.ok) throw new Error('Status '+r.status); return await r.json(); }catch(e){ appendLog('ERR '+url+' -> '+e.message); return null; } }
+  async function fetchJson(url){ try{ const r = await fetch(url); if(!r.ok) throw new Error('Status '+r.status); return await r.json(); }catch(e){ appendLog('ERR fetch '+url+' -> '+e.message); return null; } }
 
-  async function gatherBackup(){
-    appendLog('Starting backup...');
-    // 1) users
-    appendLog('Fetching users...');
-    const users = await tryFetchJson(API+'/users') || [];
-    setBar('usersBar', 20);
-    document.getElementById('usersLog').innerText = `Users: found ${users.length}`;
-    users.forEach((u,i)=> appendLog(`Loaded User '${u.username || u.name || 'unknown'}' With password '${u.password || u.hash || 'N/A'}'`));
+  // ---- Backups per-section ----
+  async function backupUsers(){
+    appendLog('Backing up users...');
+    const users = await fetchJson(API+'/users') || [];
+    setBar('usersBar', 100);
+    document.getElementById('usersLog').innerText = `Users: ${users.length}`;
+    users.forEach(u => appendLog(`User: '${u.username||u.name||"?"}' hash:'${u.password||u.hash||'N/A'}'`));
+    return users;
+  }
 
-    // 2) public chat (/log)
-    appendLog('Fetching public chat log...');
-    const publicLog = await tryFetchJson(API+'/log') || [];
-    setBar('publicBar', 40);
-    document.getElementById('publicLog').innerText = `Public messages: ${publicLog.length}`;
-    publicLog.forEach((m,i)=> appendLog(`Loaded public msg by '${(m.from||m.split||'?')}'`));
+  async function backupPublic(){
+    appendLog('Backing up public log...');
+    const pub = await fetchJson(API+'/log') || [];
+    setBar('publicBar', 100);
+    document.getElementById('publicLog').innerText = `Public: ${pub.length}`;
+    pub.forEach(m => appendLog(`Public msg: ${typeof m==='string'?m:(m.from||'?')}`));
+    return pub;
+  }
 
-    // 3) threads
-    appendLog('Fetching threads list...');
-    const threads = await tryFetchJson(API+'/threads') || [];
-    setBar('threadsBar', 60);
+  async function backupThreads(){
+    appendLog('Backing up threads...');
+    const threads = await fetchJson(API+'/threads') || [];
+    setBar('threadsBar', 100);
     document.getElementById('threadsLog').innerText = `Threads: ${threads.length}`;
-    threads.forEach(t => appendLog(`Loaded thread '${t.title || t.id}' by ${t.creator||'?'}`));
+    threads.forEach(t => appendLog(`Thread: '${t.title||t.id||'?'}' by ${t.creator||'?'} (${t.messageCount||0})`));
+    return threads;
+  }
 
-    // 4) private DMs: try /pms or iterate users pairs
-    appendLog('Attempting to fetch private DMs...');
-    let pmsAll = null;
-    pmsAll = await tryFetchJson(API+'/pms') || await tryFetchJson(API+'/private') || await tryFetchJson(API+'/allpms');
-    if (pmsAll && Array.isArray(pmsAll)){
-      setBar('privateBar', 90);
-      document.getElementById('privateLog').innerText = `Private DMs: ${pmsAll.length}`;
-      pmsAll.forEach(d=> appendLog(`Loaded DM from '${d.from}' to '${d.to}' ts:${d.ts||''}`));
-    } else {
-      // fallback: iterate user pairs (may be heavy)
-      const collected = [];
-      for (let i=0;i<users.length;i++){
-        for (let j=0;j<users.length;j++){
-          if (i===j) continue;
-          const a = users[i].username || users[i].name;
-          const b = users[j].username || users[j].name;
-          if (!a||!b) continue;
-          const url = `${API}/pm/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;
-          const d = await tryFetchJson(url);
-          if (d && Array.isArray(d) && d.length){ d.forEach(m=> collected.push({from:a,to:b,ts:m.ts||'',message:m.message||m})); appendLog(`Loaded ${d.length} DM(s) ${a}->${b}`); }
-        }
-        setBar('privateBar', Math.round((i+1)/users.length*90));
-      }
-      document.getElementById('privateLog').innerText = `Private DMs (collected): ${collected.length}`;
-      pmsAll = collected;
+  async function backupPrivate(){
+    appendLog('Backing up private DMs (best-effort)...');
+    // Try server-side bulk endpoints first
+    let pms = await fetchJson(API+'/pms') || await fetchJson(API+'/allpms') || await fetchJson(API+'/private');
+    if(pms && Array.isArray(pms)){
+      setBar('privateBar', 100);
+      document.getElementById('privateLog').innerText = `Private DMs: ${pms.length}`;
+      pms.forEach(d => appendLog(`DM ${d.from||'?'} -> ${d.to||'?'} ts:${d.ts||''}`));
+      return pms;
     }
 
-    // Build XML
-    appendLog('Building XML...');
+    // Fallback: fetch per-user PMs with concurrency
+    const users = await fetchJson(API+'/users') || [];
+    const pairs = [];
+    for(let i=0;i<users.length;i++){
+      for(let j=0;j<users.length;j++){ if(i===j) continue; pairs.push([users[i].username||users[i].name, users[j].username||users[j].name]); }
+    }
+    appendLog(`Fallback: will fetch ${pairs.length} pairs with concurrency`);
+    const collected = [];
+    let completed = 0;
+    await mapLimit(pairs, 6, async (pair, idx) => {
+      const [a,b] = pair;
+      if(!a||!b) return;
+      const url = `${API}/pm/${encodeURIComponent(a)}/${encodeURIComponent(b)}`;
+      const d = await fetchJson(url);
+      if(d && Array.isArray(d) && d.length){ d.forEach(m=> collected.push({from:a,to:b,...m})); appendLog(`Loaded ${d.length} DM(s) ${a}->${b}`); }
+      completed++; if(pairs.length) setBar('privateBar', Math.round(completed/pairs.length*100));
+    });
+    document.getElementById('privateLog').innerText = `Private (collected): ${collected.length}`;
+    return collected;
+  }
+
+  function buildXml({users,publicLog,threads,privateAll}){
     function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     let xml = '<?xml version="1.0" encoding="utf-8"?>\n<backup>\n';
-    xml += '<users>\n';
-    users.forEach(u=> xml += `<user username="${esc(u.username||u.name||'')}">`+esc(u.password||u.hash||'')+`</user>\n`);
+    xml += '<users>\n'; (users||[]).forEach(u=> xml += `<user username="${esc(u.username||u.name||'')}">${esc(u.password||u.hash||'')}</user>\n`);
     xml += '</users>\n';
-    xml += '<public>\n';
-    publicLog.forEach(item=>{
-      if (typeof item === 'string'){
-        xml += `<msg ts="">${esc(item)}</msg>\n`;
-      } else if (item.from && (item.message || item.msg || item.text)){
-        const txt = item.message||item.text||item.msg||'';
-        const ts = item.ts||'';
-        xml += `<msg ts="${esc(ts)}" user="${esc(item.from)}">${esc(txt)}</msg>\n`;
-      }
-    });
-    xml += '</public>\n';
-    xml += '<threads>\n';
-    threads.forEach(t=>{
-      xml += `<thread id="${esc(t.id||t.title)}" title="${esc(t.title||'')}">`+esc(JSON.stringify(t))+'</thread>\n';
-    });
+    xml += '<public>\n'; (publicLog||[]).forEach(item=>{
+      if (typeof item === 'string') xml += `<msg ts="">${esc(item)}</msg>\n`;
+      else xml += `<msg ts="${esc(item.ts||'')}" user="${esc(item.from||item.user||'')}">${esc(item.message||item.text||'')}</msg>\n`;
+    }); xml += '</public>\n';
+    xml += '<threads>\n'; (threads||[]).forEach(t=> xml += `<thread id="${esc(t.id||t.title)}" title="${esc(t.title||'')}">${esc(JSON.stringify(t))}</thread>\n`);
     xml += '</threads>\n';
-    xml += '<private>\n';
-    if (Array.isArray(pmsAll)){
-      pmsAll.forEach(d=>{
-        if (d.from && d.to) xml += `<dm from="${esc(d.from)}" to="${esc(d.to)}" ts="${esc(d.ts||'')}">${esc(d.message||d.msg||'')}</dm>\n`;
-        else if (d.from && d.message) xml += `<dm from="${esc(d.from)}" to="" ts="${esc(d.ts||'')}">${esc(d.message||'')}</dm>\n`;
-      });
-    }
+    xml += '<private>\n'; (privateAll||[]).forEach(d=> xml += `<dm from="${esc(d.from||'')}" to="${esc(d.to||'')}" ts="${esc(d.ts||'')}">${esc(d.message||d.msg||'')}</dm>\n`);
     xml += '</private>\n</backup>';
+    return xml;
+  }
 
-    setBar('usersBar',100); setBar('publicBar',100); setBar('threadsBar',100); setBar('privateBar',100);
-    appendLog('XML built. Preparing download...');
+  async function backupAll(){
+    appendLog('Starting full backup (concurrent requests where possible)...');
+    // Run primary fetches in parallel
+    const [users,publicLog,threads,privateAll] = await Promise.all([
+      fetchJson(API+'/users'), fetchJson(API+'/log'), fetchJson(API+'/threads'), (async ()=>{ const p = await fetchJson(API+'/pms'); return p && Array.isArray(p) ? p : null; })()
+    ]);
+
+    // If privateAll null, run faster fallback: fetch PMs per-user with concurrency but only if necessary
+    let privateResult = privateAll;
+    if(!privateResult){ appendLog('No bulk PM endpoint. Performing concurrent per-user PM fetch (limited).'); privateResult = await backupPrivate(); }
+
+    const xml = buildXml({users:users||[], publicLog:publicLog||[], threads:threads||[], privateAll:privateResult||[]});
+    appendLog('Built XML. Triggering download...');
     const blob = new Blob([xml], {type:'application/xml'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = `backup-${Date.now()}.xml`; a.click();
-    appendLog('Download triggered. Backup complete.');
+    appendLog('Backup complete.');
+    // set bars to 100
+    setBar('usersBar',100); setBar('publicBar',100); setBar('threadsBar',100); setBar('privateBar',100);
   }
 
-  async function restoreFromFile(file){
-    if(!file) { appendLog('No file selected'); return; }
+  // ---- Restore (per selected sections) ----
+  async function restoreFromFile(file, sections){
+    if(!file){ appendLog('No file selected to restore'); return; }
     appendLog('Reading file '+file.name);
     const txt = await file.text();
     const dom = new DOMParser().parseFromString(txt,'application/xml');
-    // users
-    const users = Array.from(dom.querySelectorAll('backup>users>user'));
-    appendLog(`Restoring ${users.length} users...`);
-    for (let i=0;i<users.length;i++){
-      const el = users[i];
-      const username = el.getAttribute('username') || el.textContent || '';
-      const passwd = el.textContent || '';
-      appendLog(`Restoring user '${username}' with password '${passwd}'`);
-      try{
-        // Try server endpoints then localStorage
-        let ok=false;
-        try{ const r = await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r.ok) ok=true; }catch(e){}
-        if(!ok){ try{ const r2 = await fetch(API+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r2.ok) ok=true;}catch(e){} }
-        if(!ok){ // local fallback
-          const local = JSON.parse(localStorage.getItem('localUsers')||'[]');
-          if(!local.find(u=>u.username===username)) local.push({username,password:passwd,isAdmin:false});
-          localStorage.setItem('localUsers',JSON.stringify(local));
-          appendLog(`Stored user '${username}' in localUsers`);
-        } else appendLog(`Server accepted user '${username}'`);
-      }catch(e){ appendLog('ERR restore user '+e.message); }
-      setBar('usersBar', Math.round((i+1)/users.length*100));
+
+    // Users
+    if(sections.includes('users')){
+      const users = Array.from(dom.querySelectorAll('backup>users>user'));
+      appendLog(`Restoring ${users.length} users...`);
+      await mapLimit(users, 6, async (el, idx) => {
+        const username = el.getAttribute('username') || el.textContent || '';
+        const passwd = el.textContent || '';
+        appendLog(`Restoring user '${username}'`);
+        try{
+          let ok = false;
+          try{ const r = await fetch(API+'/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r.ok) ok=true; }catch(e){}
+          if(!ok){ try{ const r2 = await fetch(API+'/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:passwd})}); if(r2.ok) ok=true; }catch(e){} }
+          if(!ok){ const local = JSON.parse(localStorage.getItem('localUsers')||'[]'); if(!local.find(u=>u.username===username)) local.push({username,password:passwd,isAdmin:false}); localStorage.setItem('localUsers',JSON.stringify(local)); appendLog(`Stored '${username}' locally.`); }
+          else appendLog(`Server accepted user '${username}'.`);
+        }catch(e){ appendLog('ERR restore user '+e.message); }
+        setBar('usersBar', Math.round((idx+1)/users.length*100));
+      });
     }
 
-    // public messages
-    const msgs = Array.from(dom.querySelectorAll('backup>public>msg'));
-    appendLog(`Restoring ${msgs.length} public messages...`);
-    for (let i=0;i<msgs.length;i++){
-      const m = msgs[i];
-      const ts = m.getAttribute('ts')||'';
-      const user = m.getAttribute('user')||'';
-      const text = m.textContent||'';
-      appendLog(`Posting public msg from '${user}' ts='${ts}'`);
-      try{ await fetch(API+'/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:user,message:text,ts:ts})}); }
-      catch(e){ appendLog('ERR post public '+e.message); }
-      setBar('publicBar', Math.round((i+1)/msgs.length*100));
+    // Public
+    if(sections.includes('public')){
+      const msgs = Array.from(dom.querySelectorAll('backup>public>msg'));
+      appendLog(`Restoring ${msgs.length} public messages...`);
+      await mapLimit(msgs, 8, async (m, idx) => {
+        const ts = m.getAttribute('ts')||''; const user = m.getAttribute('user')||''; const text = m.textContent||'';
+        try{ await fetch(API+'/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user:user,message:text,ts:ts})}); appendLog(`Posted public msg ${idx+1}/${msgs.length}`); }
+        catch(e){ appendLog('ERR post public '+e.message); }
+        setBar('publicBar', Math.round((idx+1)/msgs.length*100));
+      });
     }
 
-    // threads (best-effort)
-    const threads = Array.from(dom.querySelectorAll('backup>threads>thread'));
-    appendLog(`Attempting to restore ${threads.length} threads...`);
-    for (let i=0;i<threads.length;i++){
-      const t = threads[i];
-      try{ const payload = JSON.parse(t.textContent||'{}'); await fetch(API+'/threads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); appendLog(`Posted thread ${t.getAttribute('title')||t.getAttribute('id')}`);}catch(e){ appendLog('ERR thread '+e.message); }
-      setBar('threadsBar', Math.round((i+1)/threads.length*100));
+    // Threads
+    if(sections.includes('threads')){
+      const threads = Array.from(dom.querySelectorAll('backup>threads>thread'));
+      appendLog(`Restoring ${threads.length} threads...`);
+      await mapLimit(threads, 6, async (t, idx) => {
+        try{ const payload = JSON.parse(t.textContent||'{}'); await fetch(API+'/threads',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); appendLog(`Posted thread ${t.getAttribute('title')||t.getAttribute('id')}`); }
+        catch(e){ appendLog('ERR thread '+e.message); }
+        setBar('threadsBar', Math.round((idx+1)/threads.length*100));
+      });
     }
 
-    // private dms
-    const dms = Array.from(dom.querySelectorAll('backup>private>dm'));
-    appendLog(`Restoring ${dms.length} private dms...`);
-    for (let i=0;i<dms.length;i++){
-      const d = dms[i];
-      const from = d.getAttribute('from')||''; const to = d.getAttribute('to')||''; const ts = d.getAttribute('ts')||''; const text = d.textContent||'';
-      appendLog(`Posting DM ${from} -> ${to} ts:${ts}`);
-      try{ await fetch(API+'/pm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from,to,message:text,ts})}); }
-      catch(e){ appendLog('ERR post dm '+e.message); }
-      setBar('privateBar', Math.round((i+1)/dms.length*100));
+    // Private DMs
+    if(sections.includes('private')){
+      const dms = Array.from(dom.querySelectorAll('backup>private>dm'));
+      appendLog(`Restoring ${dms.length} private dms...`);
+      await mapLimit(dms, 8, async (d, idx) => {
+        const from = d.getAttribute('from')||''; const to = d.getAttribute('to')||''; const ts = d.getAttribute('ts')||''; const text = d.textContent||'';
+        try{ await fetch(API+'/pm',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({from,to,message:text,ts})}); appendLog(`Posted DM ${from}->${to} (${idx+1}/${dms.length})`); }
+        catch(e){ appendLog('ERR post dm '+e.message); }
+        setBar('privateBar', Math.round((idx+1)/dms.length*100));
+      });
     }
 
-    appendLog('Restore complete.');
+    appendLog('Restore finished.');
   }
 
-  document.getElementById('backupBtn').onclick = gatherBackup;
+  // Wire UI
+  document.getElementById('backupAll').onclick = backupAll;
+  document.getElementById('backupUsers').onclick = async ()=>{ const u = await backupUsers(); const xml = buildXml({users:u}); const blob = new Blob([xml],{type:'application/xml'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`backup-users-${Date.now()}.xml`; a.click(); };
+  document.getElementById('backupPublic').onclick = async ()=>{ const p = await backupPublic(); const xml = buildXml({publicLog:p}); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([xml],{type:'application/xml'})); a.download=`backup-public-${Date.now()}.xml`; a.click(); };
+  document.getElementById('backupThreads').onclick = async ()=>{ const t = await backupThreads(); const xml = buildXml({threads:t}); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([xml],{type:'application/xml'})); a.download=`backup-threads-${Date.now()}.xml`; a.click(); };
+  document.getElementById('backupPrivate').onclick = async ()=>{ const d = await backupPrivate(); const xml = buildXml({privateAll:d}); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([xml],{type:'application/xml'})); a.download=`backup-private-${Date.now()}.xml`; a.click(); };
+
   document.getElementById('restoreBtn').onclick = ()=>{
     const f = filePicker.files && filePicker.files[0];
-    if(!f) appendLog('No file selected to restore'); else restoreFromFile(f);
+    if(!f){ appendLog('No file selected to restore'); return; }
+    const sections = [];
+    if(document.getElementById('restoreUsers').checked) sections.push('users');
+    if(document.getElementById('restorePublic').checked) sections.push('public');
+    if(document.getElementById('restoreThreads').checked) sections.push('threads');
+    if(document.getElementById('restorePrivate').checked) sections.push('private');
+    restoreFromFile(f, sections);
   };
+
   filePicker.onchange = ()=>{ appendLog('File selected: '+(filePicker.files[0]&&filePicker.files[0].name||'')); };
 
-  appendLog('Hide console ready.');
+  appendLog('Admin Console ready.');
 })();
 </script>
 </body>
