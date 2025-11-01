@@ -139,22 +139,19 @@
           } catch (e) { /* ignore and try next */ }
         }
 
-        // If the backend accepted the creation we still mirror it locally so UI and backups see it.
-        if (ok) {
-          try {
-            const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
-            if (!localUsers.find(x => x.username === u)) {
-              localUsers.push({ username: u, password: p, isAdmin: false });
-              localStorage.setItem('localUsers', JSON.stringify(localUsers));
-            }
-          } catch (e) { /* ignore localStorage write errors */ }
-        } else {
-          // fallback local create
+        // Regardless of backend outcome, ensure the created account is mirrored/updated in localStorage
+        try {
           const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
-          if (localUsers.find(x=>x.username===u)) { msgEl.innerText = 'User already exists (offline mode).'; return; }
-          localUsers.push({ username: u, password: p, isAdmin: false });
+          const idx = localUsers.findIndex(x => x.username === u);
+          if (idx === -1) {
+            localUsers.push({ username: u, password: p, isAdmin: false });
+          } else {
+            // update existing entry to reflect latest password/isAdmin
+            localUsers[idx].password = p;
+            if (typeof localUsers[idx].isAdmin === 'undefined') localUsers[idx].isAdmin = false;
+          }
           localStorage.setItem('localUsers', JSON.stringify(localUsers));
-        }
+        } catch (e) { /* ignore localStorage write errors */ }
         // Auto-login new user
         localStorage.setItem('chatUser', u);
         localStorage.setItem('isAdmin', false);
