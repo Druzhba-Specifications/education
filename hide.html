@@ -163,16 +163,17 @@
       // log sender information robustly for multiple shapes
       pub.forEach(m => {
         if (typeof m === 'string') {
-          // try to parse "User>>Message"
+          // try to parse "User>>Message" format
           if (m.includes('>>')) {
-            const p = m.split('>>');
-            appendLog(`Public msg from '${p[0].trim()}'`);
+            const [sender, msg] = m.split('>>', 2);
+            appendLog(`Public msg from '${sender.trim()}': ${msg.trim()}`);
           } else {
             appendLog(`Public msg (raw): ${m}`);
           }
         } else if (m && typeof m === 'object') {
           const sender = (m.from || m.user || m.username || m.author || m.sender || '?');
-          appendLog(`Public msg from '${sender}'`);
+          const msg = m.message || m.text || m.content || '';
+          appendLog(`Public msg from '${sender}': ${msg}`);
         } else {
           appendLog('Public msg: (unknown format)');
         }
@@ -236,8 +237,14 @@
     });
     xml += '</users>\n';
     xml += '<public>\n'; (publicLog||[]).forEach(item=>{
-      if (typeof item === 'string') xml += `<msg ts="">${esc(item)}</msg>\n`;
-      else xml += `<msg ts="${esc(item.ts||'')}" user="${esc(item.from||item.user||'')}">${esc(item.message||item.text||'')}</msg>\n`;
+      if (typeof item === 'string') {
+        if (item.includes('>>')) {
+          const [sender, msg] = item.split('>>', 2);
+          xml += `<msg ts="" user="${esc(sender.trim())}">${esc(msg.trim())}</msg>\n`;
+        } else {
+          xml += `<msg ts="">${esc(item)}</msg>\n`;
+        }
+      } else xml += `<msg ts="${esc(item.ts||'')}" user="${esc(item.from||item.user||'')}">${esc(item.message||item.text||'')}</msg>\n`;
     }); xml += '</public>\n';
     xml += '<threads>\n'; (threads||[]).forEach(t=> xml += `<thread id="${esc(t.id||t.title)}" title="${esc(t.title||'')}">${esc(JSON.stringify(t))}</thread>\n`);
     xml += '</threads>\n';
