@@ -891,14 +891,29 @@
           return;
         }
 
-        let from,msg,ts;
-        if (current==='public') {
-          [from,msg] = item.split('>>');
-          ts = Date.now();
-        } else {
-          from = item.from;
-          msg  = item.message;
-          ts   = item.ts;
+        // Support multiple message shapes:
+        // 1) public strings like "User>>Message"
+        // 2) objects: { from, message, ts } (public or private)
+        // 3) other object shapes with user/message-like fields
+        let from = '';
+        let msg = '';
+        let ts = Date.now();
+
+        if (typeof item === 'string') {
+          // string format: try to split on '>>'
+          if (item.includes('>>')) {
+            const parts = item.split('>>');
+            from = (parts[0]||'').trim();
+            msg = (parts.slice(1).join('>>')||'').trim();
+          } else {
+            // raw string with no explicit sender
+            from = 'system';
+            msg = item;
+          }
+        } else if (typeof item === 'object' && item !== null) {
+          from = (item.from || item.user || item.username || item.sender || '').toString();
+          msg  = (item.message || item.msg || item.text || item.body || '').toString();
+          ts   = item.ts || item.time || item.timestamp || ts;
         }
 
         const isNew = ts > (lastRead[current]||0);
