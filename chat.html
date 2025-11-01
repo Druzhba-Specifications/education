@@ -216,6 +216,21 @@
       cursor: pointer;
     }
 
+    /* Sidebar hint (keyboard shortcuts) */
+    #sidebarHint {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+      font-size: 12px;
+      z-index: 2000;
+      opacity: 0.9;
+    }
+
     /* WELCOME POPUP */
     #welcomeModal {
       position: fixed;
@@ -373,6 +388,7 @@
         <button id="helpBtn">Help</button>
       </span>
     </div>
+    <div id="sidebarHint">Press T to toggle Threads · U to toggle Users</div>
 
     <!-- THREADS UI -->
     <div id="threadsPanel" style="margin-bottom:20px; background:#f9f9f9; border-radius:8px; padding:10px;">
@@ -1084,6 +1100,19 @@
       // initial threads load and periodic refresh
       loadThreads();
       setInterval(loadThreads, 5000);
+
+      // Keyboard shortcuts to toggle sidebars: T -> Threads, U -> Users
+      document.addEventListener('keydown', (e) => {
+        // ignore when typing in an input or textarea
+        const tag = (document.activeElement && document.activeElement.tagName) || '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+        const key = e.key.toLowerCase();
+        if (key === 't') {
+          document.getElementById('threadsSidebar').classList.toggle('collapsed');
+        } else if (key === 'u') {
+          document.getElementById('usersSidebar').classList.toggle('collapsed');
+        }
+      });
 
   })();
   </script>

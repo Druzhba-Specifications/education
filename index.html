@@ -21,10 +21,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
 </head>
 <body>
-  <h2>🔐 Chat Login</h2>
-  <input type="text" id="username" placeholder="Username"><br>
-  <input type="password" id="password" placeholder="Password"><br>
-  <button id="loginBtn">Login</button>
+  <h2>Chat Login</h2>
+  <div style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace; display:inline-block; text-align:left;">
+    <label>Username<br><input type="text" id="username" placeholder="username"></label><br>
+    <label>Password<br><input type="password" id="password" placeholder="password"></label><br>
+    <div style="margin-top:8px; display:flex; gap:8px;">
+      <button id="loginBtn">Login</button>
+      <button id="showRegisterBtn">Create account</button>
+    </div>
+  </div>
+
+  <div id="registerBox" style="display:none; margin-top:16px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;">
+    <h3 style="margin:4px 0;">Create account</h3>
+    <label>Username<br><input type="text" id="regUsername" placeholder="username"></label><br>
+    <label>Password<br><input type="password" id="regPassword" placeholder="password"></label><br>
+    <button id="registerBtn">Create</button>
+    <button id="cancelRegisterBtn">Cancel</button>
+    <div id="regMsg" style="color:#a00;margin-top:6px;"></div>
+  </div>
 
   <!-- Roadmap UI (view only) -->
   <div id="roadmap-container" style="position: fixed; top: 50px; right: 40px; width: 300px; background: #fff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); padding: 20px; z-index:999;">
@@ -39,7 +53,7 @@
   </div>
 
   <script>
-    const backend = 'https://chat-backend-pdzh.onrender.com';
+  const backend = 'https://chat-backend-pdzh.onrender.com';
 
     // Make login button instant and responsive
     document.getElementById('loginBtn').addEventListener('click', login);
@@ -70,21 +84,27 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password })
         });
-        const result = await res.json();
-
-        if (result.success) {
-          localStorage.setItem('chatUser', username);
-          localStorage.setItem('isAdmin', result.isAdmin);
-          // System message for login (to be handled in chat.html)
-          localStorage.setItem('systemMessage', `${username} logged in.`);
-          if (result.redirect) {
-            location.href = result.redirect;
-          } else {
-            location.href = 'chat.html';
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success) {
+            localStorage.setItem('chatUser', username);
+            localStorage.setItem('isAdmin', result.isAdmin || false);
+            localStorage.setItem('systemMessage', `${username} logged in.`);
+            location.href = result.redirect || 'chat.html';
+            return;
           }
-        } else {
-          alert('❌ Invalid username or password.');
         }
+        // If backend login failed, fall back to localStorage users (for offline/demo)
+        const localUsers = JSON.parse(localStorage.getItem('localUsers') || '[]');
+        const match = localUsers.find(u => u.username === username && u.password === password);
+        if (match) {
+          localStorage.setItem('chatUser', username);
+          localStorage.setItem('isAdmin', !!match.isAdmin);
+          localStorage.setItem('systemMessage', `${username} logged in.`);
+          location.href = 'chat.html';
+          return;
+        }
+        alert('❌ Invalid username or password.');
       } catch (err) {
         alert('Login failed. Please try again.');
       } finally {
@@ -92,6 +112,53 @@
         btn.textContent = 'Login';
       }
     }
+
+    // Registration flow (tries backend, falls back to localStorage)
+    document.getElementById('showRegisterBtn').onclick = () => {
+      document.getElementById('registerBox').style.display = 'block';
+    };
+    document.getElementById('cancelRegisterBtn').onclick = () => {
+      document.getElementById('registerBox').style.display = 'none';
+    };
+    document.getElementById('registerBtn').onclick = async () => {
+      const u = document.getElementById('regUsername').value.trim();
+      const p = md5(document.getElementById('regPassword').value.trim());
+      const msgEl = document.getElementById('regMsg');
+      if (!u || !p) { msgEl.innerText = 'Please provide username and password.'; return; }
+      msgEl.innerText = '';
+      try {
+        // Try backend /register then fallback to /users
+        let ok = false;
+        try {
+          const res = await fetch(`${backend}/register`, {
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p })
+          });
+          if (res.ok) ok = true;
+        } catch (e) { /* ignore */ }
+        if (!ok) {
+          try {
+            const res2 = await fetch(`${backend}/users`, {
+              method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p })
+            });
+            if (res2.ok) ok = true;
+          } catch (e) { /* ignore */ }
+        }
+        if (!ok) {
+          // fallback local create
+          const localUsers = JSON.parse(localStorage.getItem('localUsers')||'[]');
+          if (localUsers.find(x=>x.username===u)) { msgEl.innerText = 'User already exists (offline mode).'; return; }
+          localUsers.push({ username: u, password: p, isAdmin: false });
+          localStorage.setItem('localUsers', JSON.stringify(localUsers));
+        }
+        // Auto-login new user
+        localStorage.setItem('chatUser', u);
+        localStorage.setItem('isAdmin', false);
+        localStorage.setItem('systemMessage', `${u} created account and logged in.`);
+        location.href = 'chat.html';
+      } catch (err) {
+        msgEl.innerText = 'Registration failed.';
+      }
+    };
 
     // Roadmap edit/save functionality removed for public view
   </script>
